@@ -1,0 +1,72 @@
+PY := venv/bin/python
+# If the bin version does not exist look in venv/local/bin
+ifeq ($(wildcard venv/bin/pip),)
+  PIP = venv/local/bin/pip
+else
+  PIP = venv/bin/pip
+endif
+# If the bin version does not exist look in venv/local/bin
+NOSE = venv/bin/nosetests
+
+# ###########
+# Build
+# ###########
+
+.PHONY: install
+install: venv develop
+
+venv: $(PY)
+$(PY):
+	virtualenv venv
+
+.PHONY: clean_all
+clean_all: clean clean_venv
+
+.PHONY: clean_venv
+clean_venv:
+	rm -rf venv
+
+.PHONY: clean
+clean:
+	find . -name '*.pyc' -delete
+	find . -name '*.bak' -delete
+	rm -f .coverage
+
+develop: lib/python*/site-packages/backend.egg-link
+lib/python*/site-packages/backend.egg-link:
+	$(PY) setup.py develop
+
+.PHONY: sysdeps
+sysdeps:
+	sudo apt-get $(shell tty -s || echo -y) install python3-dev
+
+# ###########
+# Develop
+# ###########
+
+$(NOSE): $(PY)
+	@$(PIP) install -U -r requirements.test.txt
+
+.PHONY: test
+test: unit_test functional_test
+
+unit_test: $(NOSE)
+	@$(NOSE) --nologcapture
+
+functional_test: $(NOSE)
+	@$(NOSE) --nologcapture test_func
+
+.PHONY: coverage
+coverage: $(NOSE)
+	@echo Testing with coverage...
+	@$(NOSE) --nologcapture --with-coverage --cover-package=backend
+
+.PHONY: lint
+lint:
+	@find $(sources) -type f \( -iname '*.py' ! -iname '__init__.py' ! -iwholename '*venv/*' \) -print0 | xargs -r0 flake8
+
+.PHONY: check
+check: test lint
+
+.PHONY: all
+all: clean venv coverage lint
