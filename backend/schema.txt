@@ -1,0 +1,58 @@
+review
+--------------
+id
+review_type_id
+review_category_id
+source_id
+project_id
+state (PENDING, REVIEWED, MERGED, RESUBMITTED, CLOSED)
+title
+
+
+review_type
+--------------
+id
+name (merge, new)
+
+
+review_category
+--------------
+id
+name (charm, tools, docs)
+
+
+review_reviewer
+--------------
+review_id
+reviewers_id
+state (NONE, APPROVED, NEEDS_FIXING, REJECTED)
+
+
+reviewer
+-------------
+id
+display_name
+is_charmer
+email?
+
+
+profile
+------------
+id
+reviewer_id
+source_id (github, lp, etc)
+url
+
+
+source
+----------
+id
+name (github, launchpad, etc)
+
+
+project
+----------
+id
+source_id
+name
+url
