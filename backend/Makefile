@@ -7,7 +7,7 @@ else
 endif
 # If the bin version does not exist look in venv/local/bin
 NOSE = venv/bin/nosetests
-
+ENV?=development
 # ###########
 # Build
 # ###########
@@ -70,3 +70,11 @@ check: test lint
 
 .PHONY: all
 all: clean venv coverage lint
+
+database: | backend.sqlite
+backend.sqlite:
+	@venv/bin/initialize_backend_db $(ENV).ini
+
+.PHONY: start
+start: develop database
+	@venv/bin/pserve $(ENV).ini --reload
