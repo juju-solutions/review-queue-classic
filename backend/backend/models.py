@@ -4,7 +4,8 @@ from sqlalchemy import (
     Integer,
     Text,
     Boolean,
-    ForeignKey
+    Enum,
+    ForeignKey,
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,7 +13,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import (
     scoped_session,
     sessionmaker,
-    relationship
+    relationship,
+    backref,
     )
 
 from zope.sqlalchemy import ZopeTransactionExtension
@@ -25,18 +27,30 @@ class Review(Base):
     __tablename__ = 'review'
     id = Column(Integer, primary_key=True)
     review_type_id = Column(Integer, ForeignKey('review_type.id'))
+    review_category_id = Column(Integer, ForeignKey('review_category.id'))
     source_id = Column(Integer, ForeignKey('source.id'))
     project_id = Column(Integer, ForeignKey('project.id'))
     title = Column(Text)
-    relationship('ReviewType')
-    relationship('Source')
-    relationship('Project')
+    url = Column(Text)
+    state = Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'READY')
+    relationship('ReviewType', backref=backref("review_type", uselist=False))
+    relationship('ReviewCategory', backref=backref("review_category",
+                                                   uselist=False))
+    relationship('Source', backref=backref("source", uselist=False))
+    relationship('Project', backref=backref("project", uselist=False))
 
 
 class ReviewType(Base):
     __tablename__ = 'review_type'
     id = Column(Integer, primary_key=True)
     name = Column(Text)
+
+
+class ReviewCategory(Base):
+    __tablename__ = 'review_category'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    slug = Column(Text)
 
 
 class Reviewer(Base):
