@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Standard Meta -->
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Review Queue</title>
+  <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" type="text/css" href="${request.static_url('backend:static/css/semantic.min.css')}">
+  <link rel="stylesheet" type="text/css" href="${request.static_url('backend:static/css/main.css')}">
+</head>
+<body id="home">
+  <div class="ui page grid">
+    <div class="twelve wide column">
+      <h1>Charm Reviews</h1>
+      <table class="ui table segment sortable">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="descending">Age</th>
+            <th>State</th>
+            <th>Type</th>
+            <th class="eight wide">Name</th>
+            <th>Spread</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="warning">
+            <td><i class="github alternate icon"></td>
+            <td>10 days</td>
+            <td>APPROVED</td>
+            <td>NEW</td>
+            <td><a href="#">Apache2</a></td>
+            <td>+2 | -1 (4)</td>
+          </tr>
+          <tr>
+            <td><i class="linux icon"></td>
+            <td>5 hours</td>
+            <td>PENDING</td>
+            <td>UPDATE</td>
+            <td>MySQL</td>
+            <td>+0 | -0 | 1</td>
+          </tr>
+        </tbody>
+      </table>
+      <h1>Documentaiton Reviews</h1>
+      <table class="ui table segment sortable">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="descending">Age</th>
+            <th>State</th>
+            <th>Type</th>
+            <th class="eight wide">Name</th>
+            <th>Spread</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><i class="github alternate icon"></td>
+            <td>10 days</td>
+            <td>APPROVED</td>
+            <td>NEW</td>
+            <td>Apache2</td>
+            <td>+2 | -1 (4)</td>
+          </tr>
+          <tr>
+            <td><i class="github alternate icon"></td>
+            <td>5 hours</td>
+            <td>PENDING</td>
+            <td>UPDATE</td>
+            <td>MySQL</td>
+            <td>+0 | -0 | 1</td>
+          </tr>
+        </tbody>
+      </table>
+      <h1>Tools Reviews</h1>
+      <table class="ui table segment sortable">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="descending">Age</th>
+            <th>State</th>
+            <th>Type</th>
+            <th class="eight wide">Name</th>
+            <th>Spread</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><i class="github alternate icon"></td>
+            <td>10 days</td>
+            <td>APPROVED</td>
+            <td>NEW</td>
+            <td>Amulet</td>
+            <td>+2 | -1 (4)</td>
+          </tr>
+          <tr>
+            <td><i class="linux icon"></td>
+            <td>5 hours</td>
+            <td>PENDING</td>
+            <td>UPDATE</td>
+            <td>charm-helpers</td>
+            <td>+0 | -0 | 1</td>
+          </tr>
+        </tbody>
+      </table>
+      <h1>Ask Ubuntu</h1>
+    </div>
+    <div class="four wide column">
+      <h1>&nbsp;</h1>
+      <table class="ui table segment">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="error">
+            <td>Queue Time</td>
+            <td>100 years</td>
+          </tr>
+          <tr>
+            <td>Oldest</td>
+            <td>5 hours</td>
+          </tr>
+          <tr>
+            <td>Items</td>
+            <td>8</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
+  <script src="${request.static_url('backend:static/javascript/semantic.min.js')}"></script>
+</body>
+</html>
