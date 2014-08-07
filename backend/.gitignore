@@ -3,3 +3,4 @@ venv/*
 .coverage
 *.pyc
 *.sqlite
+devel/*

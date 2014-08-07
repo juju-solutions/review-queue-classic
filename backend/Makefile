@@ -24,7 +24,7 @@ clean_all: clean clean_venv
 
 .PHONY: clean_venv
 clean_venv:
-	rm -rf venv
+	rm -rf venv devel
 
 .PHONY: clean
 clean:
