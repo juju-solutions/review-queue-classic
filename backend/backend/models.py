@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy import (
     Column,
     Index,
@@ -5,6 +7,7 @@ from sqlalchemy import (
     Text,
     Boolean,
     Enum,
+    Date,
     ForeignKey,
     )
 
@@ -26,24 +29,30 @@ Base = declarative_base()
 class Review(Base):
     __tablename__ = 'review'
     id = Column(Integer, primary_key=True)
-    review_type_id = Column(Integer, ForeignKey('review_type.id'))
     review_category_id = Column(Integer, ForeignKey('review_category.id'))
     source_id = Column(Integer, ForeignKey('source.id'))
     project_id = Column(Integer, ForeignKey('project.id'))
     title = Column(Text)
+    type = Column(Enum('NEW', 'UPDATE'))
     url = Column(Text)
-    state = Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'READY')
-    relationship('ReviewType', backref=backref("review_type", uselist=False))
-    relationship('ReviewCategory', backref=backref("review_category",
-                                                   uselist=False))
-    relationship('Source', backref=backref("source", uselist=False))
-    relationship('Project', backref=backref("project", uselist=False))
+    api_url = Column(Text)
+    state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
+                        'READY'))
+    created = Column(Date, default=datetime.datetime.now)
+    updated = Column(Date, onupdate=datetime.datetime.now)
+    category = relationship('ReviewCategory')
+    source = relationship('Source')
+    project = relationship('Project')
+    votes = relationship('ReviewVotes')
 
 
-class ReviewType(Base):
-    __tablename__ = 'review_type'
+class ReviewVotes(Base):
+    __tablename__ = 'review_votes'
     id = Column(Integer, primary_key=True)
-    name = Column(Text)
+    reviewer_id = Column(Integer, ForeignKey('reviewer.id'))
+    review_id = Column(Integer, ForeignKey('review.id'))
+    votes = Column(Enum('POSITIVE', 'NEGATIVE'))
+    reviewer = relationship('Reviewer', backref=backref('votes'))
 
 
 class ReviewCategory(Base):
@@ -66,6 +75,8 @@ class Profile(Base):
     id = Column(Integer, primary_key=True)
     reviewer_id = Column(Integer, ForeignKey('reviewer.id'))
     source_id = Column(Integer, ForeignKey('source.id'))
+    created = Column(Date, default=datetime.datetime.now)
+    updated = Column(Date, onupdate=datetime.datetime.now)
     source = relationship('Source')
 
 
