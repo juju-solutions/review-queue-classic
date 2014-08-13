@@ -7,7 +7,7 @@ from sqlalchemy import (
     Text,
     Boolean,
     Enum,
-    Date,
+    DateTime,
     ForeignKey,
     )
 
@@ -38,8 +38,8 @@ class Review(Base):
     api_url = Column(Text)
     state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
                         'READY'))
-    created = Column(Date, default=datetime.datetime.now)
-    updated = Column(Date, onupdate=datetime.datetime.now)
+    created = Column(DateTime, default=datetime.datetime.now)
+    updated = Column(DateTime, default=datetime.datetime.now)
     category = relationship('ReviewCategory')
     source = relationship('Source')
     project = relationship('Project')
@@ -75,8 +75,8 @@ class Profile(Base):
     id = Column(Integer, primary_key=True)
     reviewer_id = Column(Integer, ForeignKey('reviewer.id'))
     source_id = Column(Integer, ForeignKey('source.id'))
-    created = Column(Date, default=datetime.datetime.now)
-    updated = Column(Date, onupdate=datetime.datetime.now)
+    created = Column(DateTime, default=datetime.datetime.now)
+    updated = Column(DateTime, onupdate=datetime.datetime.now)
     source = relationship('Source')
 
 
