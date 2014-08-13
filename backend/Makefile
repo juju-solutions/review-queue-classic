@@ -20,7 +20,11 @@ $(PY):
 	virtualenv venv
 
 .PHONY: clean_all
-clean_all: clean clean_venv
+clean_all: clean clean_venv clean_db
+
+.PHONY: clean_db
+clean_db:
+	rm -f backend.sqlite
 
 .PHONY: clean_venv
 clean_venv:
