@@ -13,7 +13,6 @@ from pyramid.scripts.common import parse_vars
 
 from ..models import (
     DBSession,
-    ReviewType,
     ReviewCategory,
     Source,
     Base,
@@ -42,27 +41,32 @@ def main(argv=sys.argv):
         DBSession.add(Source(name='Github', slug='gh'))
         DBSession.add(Source(name='git', slug='git'))
         DBSession.add(Source(name='Launchpad', slug='lp'))
-        DBSession.add(ReviewType(name='NEW'))
-        DBSession.add(ReviewType(name='UPDATE'))
         DBSession.add(ReviewCategory(slug='charm', name='Charm'))
         DBSession.add(ReviewCategory(slug='tool', name='tool'))
         DBSession.add(ReviewCategory(slug='documentation', name='documentation'))
         DBSession.add(ReviewCategory(slug='askubuntu', name='Ask Ubuntu'))
 
     with transaction.manager:
-        r = Review(title='New charm apache2', url='http://marcoceppi.com')
-        r.Source = DBSession.query(Source).filter_by(slug='lp').one()
-        r.ReviewType = DBSession.query(ReviewType).filter_by(name='NEW').one()
-        r.ReviewCategory = DBSession.query(ReviewCategory).filter_by(slug='charm').one()
+        r = Review(title='New charm apache2', url='http://marcoceppi.com',
+                   type='NEW')
+        r.source = DBSession.query(Source).filter_by(slug='lp').one()
+        r.category = DBSession.query(ReviewCategory).filter_by(slug='charm').one()
 
         DBSession.add(r)
 
     with transaction.manager:
-        r = Review(title='New charm apache2', url='http://marcoceppi.com')
-        r.Source = DBSession.query(Source).filter_by(slug='lp').one()
-        r.ReviewType = DBSession.query(ReviewType).filter_by(name='NEW').one()
-        r.ReviewCategory = DBSession.query(ReviewCategory).filter_by(slug='tool').one()
+        r = Review(title='Charmtools v 0.9.9.9', url='http://marcoceppi.com',
+                   type='UPDATE')
+        r.source = DBSession.query(Source).filter_by(slug='lp').one()
+        r.category = DBSession.query(ReviewCategory).filter_by(slug='tool').one()
 
         DBSession.add(r)
 
+    with transaction.manager:
+        r = Review(title='Update mysql from crashed disk', url='http://marcoceppi.com',
+                   type='UPDATE')
+        r.source = DBSession.query(Source).filter_by(slug='lp').one()
+        r.category = DBSession.query(ReviewCategory).filter_by(slug='charm').one()
+
+        DBSession.add(r)
 
