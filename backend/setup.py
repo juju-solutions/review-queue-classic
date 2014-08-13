@@ -17,6 +17,7 @@ requires = [
     'transaction',
     'zope.sqlalchemy',
     'waitress',
+    'launchpadlib',
     ]
 
 setup(name='backend',

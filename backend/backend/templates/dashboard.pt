@@ -26,21 +26,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr class="warning">
-            <td><i class="github alternate icon"></td>
-            <td>10 days</td>
-            <td>APPROVED</td>
-            <td>NEW</td>
-            <td><a href="#">Apache2</a></td>
-            <td>+2 | -1 (4)</td>
-          </tr>
-          <tr>
+          <tr tal:repeat="review reviews">
             <td><i class="linux icon"></td>
-            <td>5 hours</td>
-            <td>PENDING</td>
-            <td>UPDATE</td>
-            <td>MySQL</td>
-            <td>+0 | -0 | 1</td>
+            <td>10 days</td>
+            <td>${review.state}</td>
+            <td>${review.type}</td>
+            <td><a href="${review.url}">${review.title}</a></td>
+            <td>N/A</td>
           </tr>
         </tbody>
       </table>
