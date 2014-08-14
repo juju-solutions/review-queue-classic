@@ -38,9 +38,10 @@ class Review(Base):
     url = Column(Text)
     api_url = Column(Text)
     state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
-                        'READY'))
+                        'READY', 'NEW', 'IN PROGRESS'))
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, default=datetime.datetime.now)
+
     category = relationship('ReviewCategory')
     source = relationship('Source')
     project = relationship('Project')
