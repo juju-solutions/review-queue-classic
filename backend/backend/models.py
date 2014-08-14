@@ -33,6 +33,8 @@ class Review(Base):
     review_category_id = Column(Integer, ForeignKey('review_category.id'))
     source_id = Column(Integer, ForeignKey('source.id'))
     project_id = Column(Integer, ForeignKey('project.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+
     title = Column(Text)
     type = Column(Enum('NEW', 'UPDATE'))
     url = Column(Text)
@@ -45,7 +47,8 @@ class Review(Base):
     category = relationship('ReviewCategory')
     source = relationship('Source')
     project = relationship('Project')
-    votes = relationship('ReviewVotes')
+    votes = relationship('ReviewVote')
+    owner = relationship('User', backref=backref('reviews'))
 
     @pyramid.decorator.reify
     def age(self):
@@ -57,38 +60,56 @@ class Review(Base):
         return '%s h' % hours
 
 
-class ReviewVotes(Base):
-    __tablename__ = 'review_votes'
+class ReviewVote(Base):
+    __tablename__ = 'review_vote'
     id = Column(Integer, primary_key=True)
-    reviewer_id = Column(Integer, ForeignKey('reviewer.id'))
+    comment_id = Column(Text)
+    user_id = Column(Integer, ForeignKey('user.id'))
     review_id = Column(Integer, ForeignKey('review.id'))
-    votes = Column(Enum('POSITIVE', 'NEGATIVE'))
-    reviewer = relationship('Reviewer', backref=backref('votes'))
+
+    vote = Column(Enum('POSITIVE', 'NEGATIVE', 'COMMENT'))
+
+    owner = relationship('User', backref=backref('votes'))
 
 
 class ReviewCategory(Base):
     __tablename__ = 'review_category'
     id = Column(Integer, primary_key=True)
+
     name = Column(Text)
     slug = Column(Text)
 
 
-class Reviewer(Base):
-    __tablename__ = 'reviewer'
+class User(Base):
+    __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
+
     name = Column(Text)
-    is_charmer = Column(Boolean)
-    profiles = relationship('Profile')
+    is_charmer = Column(Boolean, default=False)
 
 
 class Profile(Base):
     __tablename__ = 'profile'
     id = Column(Integer, primary_key=True)
-    reviewer_id = Column(Integer, ForeignKey('reviewer.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
     source_id = Column(Integer, ForeignKey('source.id'))
+
+    name = Column(Text)
+    username = Column(Text)
+    url = Column(Text)
     created = Column(DateTime, default=datetime.datetime.now)
     updated = Column(DateTime, onupdate=datetime.datetime.now)
+
     source = relationship('Source')
+    user = relationship('User', backref=backref('profiles'))
+
+
+class Address(Base):
+    __tablename__ = 'emails'
+    id = Column(Integer, primary_key=True)
+    profile_id = Column(Integer, ForeignKey('profile.id'))
+    profile = relationship('Profile', backref=backref('addresses'))
+    email = Column(Text)
 
 
 class Source(Base):
