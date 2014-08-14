@@ -18,10 +18,6 @@ from .models import (
 @view_config(route_name='home', renderer='templates/dashboard.pt')
 def dashboard(request):
     #reviews = DBSession.query(Review).group_by(Review.review_category_id).all()
-    reviews = DBSession.query(Review).order_by(Review.updated).all()
-
-    for review in reviews:
-        b = date.fromtimestamp(review.updated) - date.today()
-        review.age = b.days
-
-    return dict(reviews=reviews)
+    reviews = DBSession.query(Review).filter(Review.state != 'REVIEWED', Review.state != 'NEW', Review.state != 'IN PROGRESS').order_by(Review.updated).all()
+    incoming = DBSession.query(Review).filter_by(state='NEW').order_by(Review.updated)
+    return dict(reviews=reviews, incoming=incoming)

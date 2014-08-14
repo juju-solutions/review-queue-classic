@@ -13,6 +13,27 @@
 <body id="home">
   <div class="ui page grid">
     <div class="twelve wide column">
+      <h1>Incoming Charms</h1>
+      <table class="ui table segment sortable">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="descending">Age</th>
+            <th class="eight wide">Title</th>
+            <th>Owner</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr tal:repeat="review incoming">
+            <td><i class="linux icon"></td>
+            <td>${review.age}</td>
+            <td><a href="${review.url}">${review.title}</a></td>
+            <td>${review.owner.name}</td>
+            <td>N/A</td>
+          </tr>
+        </tbody>
+      </table>
       <h1>Charm Reviews</h1>
       <table class="ui table segment sortable">
         <thead>
@@ -28,7 +49,7 @@
         <tbody>
           <tr tal:repeat="review reviews">
             <td><i class="linux icon"></td>
-            <td>10 days</td>
+            <td>${review.age}</td>
             <td>${review.state}</td>
             <td>${review.type}</td>
             <td><a href="${review.url}">${review.title}</a></td>
