@@ -1,4 +1,5 @@
 import datetime
+import pyramid
 
 from sqlalchemy import (
     Column,
@@ -44,6 +45,15 @@ class Review(Base):
     source = relationship('Source')
     project = relationship('Project')
     votes = relationship('ReviewVotes')
+
+    @pyramid.decorator.reify
+    def age(self):
+        d = datetime.datetime.now() - self.updated
+        hours = d.seconds * 60 * 60
+        if hours > 48:
+            return '%s d' % d.days
+
+        return '%s h' % hours
 
 
 class ReviewVotes(Base):
