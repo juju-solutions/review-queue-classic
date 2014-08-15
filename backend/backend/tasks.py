@@ -55,7 +55,7 @@ def map_lp_state(bug_task):
               'confirmed': 'PENDING',
               'triaged': 'PENDING',
               'in progress': 'IN PROGRESS',
-              'fix committed': 'PENDING',
+              'fix committed': 'READY',
               'fix released': 'CLOSED',
              }
 
