@@ -12,8 +12,8 @@
 </head>
 <body id="home">
   <div class="ui page grid">
-    <div class="twelve wide column">
-      <h1>Incoming Charms</h1>
+    <div class="fourteen wide column">
+      <h1>Incoming Charms  (${len(incoming)})</h1>
       <table class="ui table segment sortable">
         <thead>
           <tr>
@@ -34,7 +34,7 @@
           </tr>
         </tbody>
       </table>
-      <h1>Charm Reviews</h1>
+      <h1>Charm Reviews (${len(reviews)})</h1>
       <table class="ui table segment sortable">
         <thead>
           <tr>
