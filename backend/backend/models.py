@@ -47,8 +47,15 @@ class Review(Base):
     category = relationship('ReviewCategory')
     source = relationship('Source')
     project = relationship('Project')
-    votes = relationship('ReviewVote')
     owner = relationship('User', backref=backref('reviews'))
+
+    @pyramid.decorator.reify
+    def positive_votes(self):
+        return [vote for vote in self.votes if vote.vote == 'POSITIVE']
+
+    @pyramid.decorator.reify
+    def negative_votes(self):
+        return [vote for vote in self.votes if vote.vote == 'NEGATIVE']
 
     @pyramid.decorator.reify
     def age(self):
@@ -70,6 +77,7 @@ class ReviewVote(Base):
     vote = Column(Enum('POSITIVE', 'NEGATIVE', 'COMMENT'))
 
     owner = relationship('User', backref=backref('votes'))
+    review = relationship('Review', backref=backref('votes'))
 
 
 class ReviewCategory(Base):
