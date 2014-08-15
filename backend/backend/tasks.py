@@ -1,8 +1,6 @@
 
 import transaction
 
-from launchpadlib.launchpad import Launchpad
-
 from .models import (
     DBSession,
     Source,
@@ -11,6 +9,7 @@ from .models import (
     User,
 )
 
+from .helpers import get_lp
 from sqlalchemy import engine_from_config
 
 from pyramid.paster import (
@@ -22,11 +21,7 @@ from pyramid.paster import (
 settings = get_appsettings('development.ini', options={})
 engine = engine_from_config(settings, 'sqlalchemy.')
 DBSession.configure(bind=engine)
-
-def get_lp(login=False):
-    # Make this a factory?
-    if not login:
-        return Launchpad.login_anonymously('review-queue', 'production', 'devel')
+charmers = get_lp().people['charmers']
 
 
 def get_all_the_things():
@@ -70,6 +65,7 @@ def map_lp_state(bug_task):
 
     return states[bug_task.status.lower()]
 
+
 def create_if_not_already_a_review(task, bug):
     try:
         DBSession.query(Review).filter_by(api_url=task.self_link).one()
@@ -83,7 +79,7 @@ def create_if_not_already_a_review(task, bug):
                    state=map_lp_state(task), api_url=task.self_link,
                    created=task.date_created,
                    updated=bug.date_last_message if bug.date_last_message > bug.date_last_updated else bug.date_last_updated)
-        r.owner = create_user(task.owner_link)
+        r.owner = create_user(task.owner)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
         DBSession.add(r)
 
@@ -91,8 +87,6 @@ def create_if_not_already_a_review(task, bug):
 
 
 def create_user(profile):
-    lp = get_lp()
-    profile = lp.load(profile)
     try:
         p = DBSession.query(Profile).filter_by(url=profile.web_link).one()
     except:
@@ -100,7 +94,6 @@ def create_user(profile):
     else:
         return p.user
 
-    charmers = lp.people['charmers']
     with transaction.manager:
         # It's an LP profile
         p = Profile(name=profile.display_name, username=profile.name,
