@@ -1,5 +1,4 @@
 import re
-import pytz
 import transaction
 
 from .models import (
