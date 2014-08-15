@@ -40,7 +40,7 @@ class Review(Base):
     url = Column(Text)
     api_url = Column(Text)
     state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
-                        'READY', 'NEW', 'IN PROGRESS'))
+                        'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP'))
     created = Column(DateTime, default=datetime.datetime.utcnow)
     updated = Column(DateTime, default=datetime.datetime.utcnow)
 
