@@ -38,24 +38,26 @@
       <table class="ui table segment sortable">
         <thead>
           <tr>
-            <th></th>
             <th class="descending">Age</th>
             <th>State</th>
             <th>Type</th>
             <th class="eight wide">Name</th>
-            <th>Spread</th>
+            <th>Votes</th>
+            <th><i class="chat icon"></i></th>
           </tr>
         </thead>
         <tbody>
           <tr tal:repeat="review reviews">
-            <td><i class="linux icon"></td>
             <td>${review.age}</td>
             <td>${review.state}</td>
             <td>${review.type}</td>
             <td><a href="${review.url}">${review.title}</a></td>
             <td>
-              <span class="positive">${len(review.positive_votes)}</span> /
-              <span class="negative">${len(review.negative_votes)}</span> (${len(review.votes)})
+              <span class="positive">${len(review.positive_votes)}</span> |
+              <span class="negative">${len(review.negative_votes)}</span>
+            </td>
+            <td>
+              ${len(review.votes)}
             </td>
           </tr>
         </tbody>
@@ -124,7 +126,7 @@
       </table>
       <h1>Ask Ubuntu</h1>
     </div>
-    <div class="four wide column">
+    <div class="two wide column">
       <h1>&nbsp;</h1>
       <table class="ui table segment">
         <thead>
