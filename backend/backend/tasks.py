@@ -1,4 +1,5 @@
 import re
+import pytz
 import transaction
 
 from .models import (
@@ -25,7 +26,22 @@ DBSession.configure(bind=engine)
 charmers = get_lp().people['charmers']
 
 
-def get_all_the_things():
+def import_from_lp():
+    get_bugs()
+    get_merges()
+
+
+def get_merges():
+    proposals = charmers.getRequestedReviews()
+    b = charmers.getBranches()
+
+    for branch in b:
+        m = branch.getMergeProposals()
+        for merge in m:
+            create_review_from_merge(merge)
+
+
+def get_bugs():
     lp = get_lp()
     charm = lp.distributions['charms']
     branch_filter = "Show only Bugs with linked Branches"
@@ -33,20 +49,18 @@ def get_all_the_things():
     for bug in bugs:
         if '+source' in bug.web_link:
             continue
-        create_if_not_already_a_review(bug,
-                                       lp.bugs[int(''.join(bug.web_link.split('/')[-1:]))])
-
-    #
-    #proposals = charmers.getRequestedReviews()
-    #b = charmers.getBranches()
-
-    #for branch in b:
-    #    m = branch.getMergeProposals()
-    #    for merge in m:
-    #        print merge.queue_status, merge.web_link
+        create_review_from_bug(bug,
+                               lp.bugs[int(''.join(bug.web_link.split('/')[-1:]))])
 
 
-def map_lp_state(bug_task):
+def bug_state(bug_task):
+    if not bug_task.date_left_new and bug_task.status == 'New':
+        return 'NEW'
+
+    return map_lp_state(bug_task.status)
+
+
+def map_lp_state(state):
     # 'NEW', 'PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'READY', 'ABANDONDED', IN PROGRESS
     states = {'new': 'PENDING',
               'incomplete': 'REVIEWED',
@@ -58,16 +72,47 @@ def map_lp_state(bug_task):
               'in progress': 'IN PROGRESS',
               'fix committed': 'READY',
               'fix released': 'CLOSED',
+              'needs review': 'PENDING',
+              'work in progress': 'IN PROGRESS',
+              'approved': 'READY',
+              'rejected': 'CLOSED',
+              'merged': 'CLOSED',
              }
 
-    state = states[bug_task.status.lower()]
-    if not bug_task.date_left_new and bug_task.status == 'New':
-        return 'NEW'
-
-    return states[bug_task.status.lower()]
+    return states[state.lower()]
 
 
-def create_if_not_already_a_review(task, bug):
+def create_review_from_merge(task):
+    try:
+        DBSession.query(Review).filter_by(api_url=task.self_link).one()
+    except:
+        pass
+    else:
+        return
+    print(task)
+    with transaction.manager:
+        title = "Merge %s into %s" % (task.source_branch.display_name,
+                                      task.target_branch.display_name)
+        r = Review(title=title, url=task.web_link, type='UPDATE',
+                   state=map_lp_state(task.queue_status),
+                   api_url=task.self_link,
+                   created=task.date_created.replace(tzinfo=None))
+        r.owner = create_user(task.registrant)
+        r.source = DBSession.query(Source).filter_by(slug='lp').one()
+        comments = task.all_comments
+
+        if len(comments) > 0:
+            r.updated = comments[len(comments)-1].date_created.replace(tzinfo=None)
+        else:
+            r.updated = task.date_created.replace(tzinfo=None)
+
+        DBSession.add(r)
+
+    review = DBSession.query(Review).filter_by(api_url=task.self_link).one()
+    parse_comments(task.all_comments, review)
+
+
+def create_review_from_bug(task, bug):
     try:
         DBSession.query(Review).filter_by(api_url=task.self_link).one()
     except:
@@ -77,21 +122,39 @@ def create_if_not_already_a_review(task, bug):
     print(bug)
     with transaction.manager:
         r = Review(title=bug.title, url=task.web_link, type='NEW',
-                   state=map_lp_state(task), api_url=task.self_link,
+                   state=bug_state(task), api_url=task.self_link,
                    created=task.date_created,
                    updated=bug.date_last_message if bug.date_last_message > bug.date_last_updated else bug.date_last_updated)
         r.owner = create_user(task.owner)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
         DBSession.add(r)
 
-    load_comments(bug, DBSession.query(Review).filter_by(api_url=task.self_link).one())
+    parse_messages(bug.messages,
+                  DBSession.query(Review).filter_by(api_url=task.self_link).one())
 
 
-def load_comments(bug, review):
-    comments = bug.messages
+def parse_comments(comments, review):
+    for m in comments:
+        try:
+            DBSession.query(ReviewVote).filter_by(comment_id=m.self_link).one()
+        except:
+            pass
+        else:
+            print(m.self_link)
+            continue
 
-    print('%s is the review id' % review.id)
-    first = True
+        with transaction.manager:
+            s = determine_sentiment(m.vote)
+            u = create_user(m.author)
+            v = ReviewVote(vote=s, comment_id=m.self_link)
+            print("Inserting %s (%s) %s" % (m.self_link, s, u.name))
+            v.owner = u
+            v.review = review
+            DBSession.add(v)
+
+
+def parse_messages(comments, review):
+    first = True  # Hate this
     for m in comments:
         if first:
             first = False
@@ -112,6 +175,7 @@ def load_comments(bug, review):
             print("Inserting %s (%s) %s" % (m.self_link, s, u.name))
             v.owner = u
             v.review = review
+            DBSession.add(v)
 
 
 def create_user(profile):
@@ -141,8 +205,9 @@ def determine_sentiment(text):
     if not text:
         return 'COMMENT'
 
-    positive = ['lgtm', '\+1']
-    negative = ['nlgtm', '\-1 ', 'needs work']
+    positive = ['lgtm', '\+1', 'approve']
+    negative = ['nlgtm', '\-1 ', 'needs work', 'needs fixing',
+                'needs information', 'disapprove', 'resubmit', 'dnlgtm']
     sentiment = 0
     for p in positive:
         if re.findall(p, text, re.I):
