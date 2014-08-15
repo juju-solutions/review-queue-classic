@@ -1,3 +1,11 @@
 body {
   font-family: 'Ubuntu', sans-serif;
 }
+
+.positive {
+  color: #33CC00;
+}
+
+.negative {
+  color: #ff0000;
+}

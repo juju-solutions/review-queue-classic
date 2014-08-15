@@ -20,8 +20,8 @@
             <th></th>
             <th class="descending">Age</th>
             <th class="eight wide">Title</th>
-            <th>Owner</th>
-            <th>Comments</th>
+            <th class="two">Owner</th>
+            <th><i class="chat icon"></i></th>
           </tr>
         </thead>
         <tbody>
@@ -30,7 +30,7 @@
             <td>${review.age}</td>
             <td><a href="${review.url}">${review.title}</a></td>
             <td>${review.owner.name}</td>
-            <td>N/A</td>
+            <td>${len(review.votes)}</td>
           </tr>
         </tbody>
       </table>
@@ -53,7 +53,10 @@
             <td>${review.state}</td>
             <td>${review.type}</td>
             <td><a href="${review.url}">${review.title}</a></td>
-            <td>N/A</td>
+            <td>
+              <span class="positive">${len(review.positive_votes)}</span> /
+              <span class="negative">${len(review.negative_votes)}</span> (${len(review.votes)})
+            </td>
           </tr>
         </tbody>
       </table>
