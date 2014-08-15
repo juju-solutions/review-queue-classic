@@ -41,8 +41,8 @@ class Review(Base):
     api_url = Column(Text)
     state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
                         'READY', 'NEW', 'IN PROGRESS'))
-    created = Column(DateTime, default=datetime.datetime.now)
-    updated = Column(DateTime, default=datetime.datetime.now)
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+    updated = Column(DateTime, default=datetime.datetime.utcnow)
 
     category = relationship('ReviewCategory')
     source = relationship('Source')
@@ -59,7 +59,7 @@ class Review(Base):
 
     @pyramid.decorator.reify
     def age(self):
-        d = datetime.datetime.now() - self.updated
+        d = datetime.datetime.utcnow() - self.updated
         hours = d.seconds * 60 * 60
         if hours > 48:
             return '%s d' % d.days
@@ -105,8 +105,8 @@ class Profile(Base):
     name = Column(Text)
     username = Column(Text)
     url = Column(Text)
-    created = Column(DateTime, default=datetime.datetime.now)
-    updated = Column(DateTime, onupdate=datetime.datetime.now)
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+    updated = Column(DateTime, onupdate=datetime.datetime.utcnow)
 
     source = relationship('Source')
     user = relationship('User', backref=backref('profiles'))
