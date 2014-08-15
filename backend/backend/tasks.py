@@ -1,4 +1,4 @@
-
+import re
 import transaction
 
 from .models import (
@@ -7,6 +7,7 @@ from .models import (
     Review,
     Profile,
     User,
+    ReviewVote,
 )
 
 from .helpers import get_lp
@@ -83,7 +84,34 @@ def create_if_not_already_a_review(task, bug):
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
         DBSession.add(r)
 
-    #load_comments(bug)
+    load_comments(bug, DBSession.query(Review).filter_by(api_url=task.self_link).one())
+
+
+def load_comments(bug, review):
+    comments = bug.messages
+
+    print('%s is the review id' % review.id)
+    first = True
+    for m in comments:
+        if first:
+            first = False
+            continue
+
+        try:
+            DBSession.query(ReviewVote).filter_by(comment_id=m.self_link).one()
+        except:
+            pass
+        else:
+            print(m.self_link)
+            continue
+
+        with transaction.manager:
+            s = determine_sentiment(m.content)
+            u = create_user(m.owner)
+            v = ReviewVote(vote=s, comment_id=m.self_link)
+            print("Inserting %s (%s) %s" % (m.self_link, s, u.name))
+            v.owner = u
+            v.review = review
 
 
 def create_user(profile):
@@ -106,19 +134,22 @@ def create_user(profile):
         DBSession.add(r)
         DBSession.add(p)
 
-    return r
+    return DBSession.query(Profile).filter_by(url=profile.web_link).one().user
 
 
 def determine_sentiment(text):
-    positive = ['lgtm', '+1']
-    negative = ['nlgtm', '-1', 'needs work']
+    if not text:
+        return 'COMMENT'
+
+    positive = ['lgtm', '\+1']
+    negative = ['nlgtm', '\-1 ', 'needs work']
     sentiment = 0
     for p in positive:
-        if re.findall(p, text):
+        if re.findall(p, text, re.I):
             sentiment += 1
 
     for n in negative:
-        if re.findall(n, text):
+        if re.findall(n, text, re.I):
             sentiment -= 1
 
     if sentiment > 0:
