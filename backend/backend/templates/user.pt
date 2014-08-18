@@ -13,44 +13,134 @@
 <body id="home">
   <div class="ui page grid">
     <div class="eleven wide column">
-      <h1>Submitted Reviews (${len(submitted)})</h1>
-      <table class="ui table segment sortable">
-        <thead>
-          <tr>
-            <th class="descending">Age</th>
-            <th>State</th>
-            <th class="eight wide">Title</th>
-            <th><i class="chat icon"></i></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr tal:repeat="review submitted">
-            <td data-sort-value="${review.age.split(' ')[0]}">${review.age}</td>
-            <td>${review.state}</td>
-            <td><a href="${review.url}">${review.title}</a></td>
-            <td>${len(review.votes)}</td>
-          </tr>
-        </tbody>
-      </table>
-      <h1>Charms Reviewed (${len(reviews)})</h1>
-      <table class="ui table segment sortable">
-        <thead>
-          <tr>
-            <th class="descending">Age</th>
-            <th>State</th>
-            <th class="eight wide">Title</th>
-            <th><i class="chat icon"></i></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr tal:repeat="rv reviews">
-            <td>${rv.review.age}</td>
-            <td>${rv.review.state}</td>
-            <td><a href="${rv.review.url}">${rv.review.title}</a></td>
-            <td>${len(rv.review.votes)}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="review">
+        <h1>Submitted Reviews (${len(submitted)})<i class="filter icon"></i></h1>
+        <div class="ui form filter controls">
+          <div class="ui five fields">
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="closed" checked>
+              <label>New</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="inprogress" checked>
+              <label>In Progress</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="pending" checked>
+              <label>Pending</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="reviewed" checked>
+              <label>Reviewed</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="followup" checked>
+              <label>Follow Up</label>
+            </div>
+          </div>
+          <div class="ui five fields">
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="ready" checked>
+              <label>Ready</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="merged" checked>
+              <label>Merged</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="closed" checked>
+              <label>Closed</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="abandonded" checked>
+              <label>Abandonded</label>
+            </div>
+            <div class="ui field"></div>
+          </div>
+        </div>
+        <table class="ui table segment sortable">
+          <thead>
+            <tr>
+              <th class="descending">Age</th>
+              <th>State</th>
+              <th class="eight wide">Title</th>
+              <th><i class="chat icon"></i></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="${review.state.lower().replace(' ', '')}" tal:repeat="review submitted">
+              <td data-sort-value="${review.age.split(' ')[0]}">${review.age}</td>
+              <td>${review.state}</td>
+              <td><a href="${review.url}">${review.title}</a></td>
+              <td>${len(review.votes)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="review">
+        <h1>Charms Reviewed (${len(reviews)})<i class="filter icon"></i></h1>
+        <div class="ui form filter controls">
+          <div class="ui five fields">
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="closed" checked>
+              <label>New</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="inprogress" checked>
+              <label>In Progress</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="pending" checked>
+              <label>Pending</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="reviewed" checked>
+              <label>Reviewed</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="followup" checked>
+              <label>Follow Up</label>
+            </div>
+          </div>
+          <div class="ui five fields">
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="ready" checked>
+              <label>Ready</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="merged" checked>
+              <label>Merged</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="closed" checked>
+              <label>Closed</label>
+            </div>
+            <div class="ui checkbox toggle field">
+              <input type="checkbox" name="abandonded" checked>
+              <label>Abandonded</label>
+            </div>
+            <div class="ui field"></div>
+          </div>
+        </div>
+        <table class="ui table segment sortable">
+          <thead>
+            <tr>
+              <th class="descending">Age</th>
+              <th>State</th>
+              <th class="eight wide">Title</th>
+              <th><i class="chat icon"></i></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="${rv.review.state.lower().replace(' ', '')}" tal:repeat="rv reviews">
+              <td>${rv.review.age}</td>
+              <td>${rv.review.state}</td>
+              <td><a href="${rv.review.url}">${rv.review.title}</a></td>
+              <td>${len(rv.review.votes)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     <div class="five wide column">
       <h1>${user.name} <img class="ui avatar image" src="https://api.launchpad.net/1.0/~${user.profiles[0].username}/mugshot"></h1>

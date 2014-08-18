@@ -16,3 +16,12 @@ h1 .ui.avatar.image {
   height: 1em;
   margin-right: .1em;
 }
+
+h1 .icon {
+  float: right;
+  cursor: pointer;
+}
+
+.filter.controls {
+  display: none;
+}
