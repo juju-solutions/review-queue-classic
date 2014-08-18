@@ -9,3 +9,10 @@ body {
 .negative {
   color: #ff0000;
 }
+
+h1 .ui.avatar.image {
+  margin-top: -.2em;
+  width: 1em;
+  height: 1em;
+  margin-right: .1em;
+}

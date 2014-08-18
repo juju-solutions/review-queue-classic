@@ -14,6 +14,7 @@ from .models import (
     Review,
     Profile,
     User,
+    ReviewVote,
     )
 
 
@@ -31,5 +32,10 @@ def user(request):
     user = DBSession.query(Profile).filter_by(username=username).first().user
     if not user:
         return HTTPNotFound('No such user')
+    submitted = DBSession.query(Review).filter_by(owner=user).order_by(Review.updated).all()
+    reviews = (DBSession.query(ReviewVote)
+                        .filter_by(owner=user)
+                        .join(ReviewVote.review)
+                        .group_by(Review).order_by(Review.updated)).all()
 
-    return dict(user=user)
+    return dict(user=user, reviews=reviews, submitted=submitted)

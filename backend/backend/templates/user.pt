@@ -13,7 +13,7 @@
 <body id="home">
   <div class="ui page grid">
     <div class="eleven wide column">
-      <h1>Submitted Reviews (${len(user.reviews)})</h1>
+      <h1>Submitted Reviews (${len(submitted)})</h1>
       <table class="ui table segment sortable">
         <thead>
           <tr>
@@ -24,7 +24,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr tal:repeat="review user.reviews">
+          <tr tal:repeat="review submitted">
             <td data-sort-value="${review.age.split(' ')[0]}">${review.age}</td>
             <td>${review.state}</td>
             <td><a href="${review.url}">${review.title}</a></td>
@@ -32,7 +32,7 @@
           </tr>
         </tbody>
       </table>
-      <h1>Charms Reviewed (${len(user.reviews)})</h1>
+      <h1>Charms Reviewed (${len(reviews)})</h1>
       <table class="ui table segment sortable">
         <thead>
           <tr>
@@ -43,18 +43,20 @@
           </tr>
         </thead>
         <tbody>
-          <tr tal:repeat="review user.reviews">
-            <td>${review.age}</td>
-            <td>${review.state}</td>
-            <td><a href="${review.url}">${review.title}</a></td>
-            <td>${len(review.votes)}</td>
+          <tr tal:repeat="rv reviews">
+            <td>${rv.review.age}</td>
+            <td>${rv.review.state}</td>
+            <td><a href="${rv.review.url}">${rv.review.title}</a></td>
+            <td>${len(rv.review.votes)}</td>
           </tr>
         </tbody>
       </table>
     </div>
     <div class="five wide column">
-      <h1>${user.name} <div class="ui green label">Charmer</div></h1>
-      <center><img src="https://api.launchpad.net/1.0/~${user.profiles[0].username}/mugshot"></center>
+      <h1>${user.name} <img class="ui avatar image" src="https://api.launchpad.net/1.0/~${user.profiles[0].username}/mugshot"></h1>
+      <div class="center badges">
+        <div class="ui green label">Charmer</div>
+      </div>
       <h2>Profiles</h2>
       <table class="ui table segment">
         <thead>
