@@ -31,11 +31,15 @@ def import_from_lp():
 
 
 def get_merges():
-    proposals = charmers.getRequestedReviews()
+    #proposals = charmers.getRequestedReviews()
     b = charmers.getBranches()
 
     for branch in b:
-        m = branch.getMergeProposals()
+        m = branch.getMergeProposals(status=['Work in progress',
+                                             'Needs review', 'Approved',
+                                             'Rejected', 'Merged',
+                                             'Code failed to merge', 'Queued',
+                                             'Superseded'])
         for merge in m:
             create_review_from_merge(merge)
 
@@ -76,6 +80,9 @@ def map_lp_state(state):
               'approved': 'READY',
               'rejected': 'CLOSED',
               'merged': 'CLOSED',
+              'superseded': 'CLOSED',
+              'queued': 'PENDING',
+              'code failed to merge': 'FOLLOW UP',
              }
 
     return states[state.lower()]
