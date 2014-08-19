@@ -12,21 +12,25 @@
 </head>
 <body id="home">
   <div class="ui page grid">
-    <div class="fourteen wide column">
+    <div class="sixteen wide column">
       <h1>Incoming Charms  (${len(incoming)})</h1>
+      <div>
+        <p>A list of all new incoming charms! Shortly a reviewer will be by to
+        perform an initial review of your charm. To make this process smoother make
+        sure you've read all <a href=#>Charm Store policies</a> and have <code>charm proof</code>
+        passing without an ERROR or WARNING messages.</p>
+      </div>
       <table class="ui table segment sortable">
         <thead>
           <tr>
-            <th></th>
             <th class="descending">Age</th>
-            <th class="eight wide">Title</th>
+            <th class="eleven wide">Title</th>
             <th class="two">Owner</th>
             <th><i class="chat icon"></i></th>
           </tr>
         </thead>
         <tbody>
           <tr tal:repeat="review incoming">
-            <td><i class="linux icon"></td>
             <td>${review.age}</td>
             <td><a href="${review.url}">${review.title}</a></td>
             <td>${review.owner.name}</td>
@@ -35,34 +39,42 @@
         </tbody>
       </table>
       <h1>Charm Reviews (${len(reviews)})</h1>
+      <div>
+        <p>This contains all reviews which require attention from a chamer to complete.
+        If you're an author and see your item in this queue, congratulations! Reviews
+        are processed in a top down fashion and yours should be reviewed soon. If you
+        do not see your review in this queue after 20 minutes please check <a href="#">/user/~lpuser</a>
+        to find next actions for your review.</p>
+        <p>Those wishing to review items please refer to the
+          <a href="#">Charm Review Process</a> before continuing.
+        </p>
+      </div>
       <table class="ui table segment sortable">
         <thead>
           <tr>
             <th class="descending">Age</th>
             <th>State</th>
-            <th>Type</th>
-            <th class="eight wide">Name</th>
-            <th>Votes</th>
+            <th class="eleven wide">Name</th>
             <th><i class="chat icon"></i></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           <tr tal:repeat="review reviews">
             <td>${review.age}</td>
             <td>${review.state}</td>
-            <td>${review.type}</td>
             <td><a href="${review.url}">${review.title}</a></td>
             <td>
-              <span class="positive">${len(review.positive_votes)}</span> |
-              <span class="negative">${len(review.negative_votes)}</span>
+              ${len(review.votes)}
             </td>
             <td>
-              ${len(review.votes)}
+              <i class="attention circular red icon link" data-content="This requires follow up from the submitter"></i>
+              <i class="heart circular icon link" data-content="Waiting on response or review"></i>
             </td>
           </tr>
         </tbody>
       </table>
-      <h1>Documentaiton Reviews</h1>
+      <h1>Documentation Reviews</h1>
       <table class="ui table segment sortable">
         <thead>
           <tr>
@@ -75,22 +87,6 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><i class="github alternate icon"></td>
-            <td>10 days</td>
-            <td>APPROVED</td>
-            <td>NEW</td>
-            <td>Apache2</td>
-            <td>+2 | -1 (4)</td>
-          </tr>
-          <tr>
-            <td><i class="github alternate icon"></td>
-            <td>5 hours</td>
-            <td>PENDING</td>
-            <td>UPDATE</td>
-            <td>MySQL</td>
-            <td>+0 | -0 | 1</td>
-          </tr>
         </tbody>
       </table>
       <h1>Tools Reviews</h1>
@@ -106,53 +102,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><i class="github alternate icon"></td>
-            <td>10 days</td>
-            <td>APPROVED</td>
-            <td>NEW</td>
-            <td>Amulet</td>
-            <td>+2 | -1 (4)</td>
-          </tr>
-          <tr>
-            <td><i class="linux icon"></td>
-            <td>5 hours</td>
-            <td>PENDING</td>
-            <td>UPDATE</td>
-            <td>charm-helpers</td>
-            <td>+0 | -0 | 1</td>
-          </tr>
         </tbody>
       </table>
       <h1>Ask Ubuntu</h1>
     </div>
-    <div class="two wide column">
-      <h1>&nbsp;</h1>
-      <table class="ui table segment">
-        <thead>
-          <tr>
-            <th>Metric</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="error">
-            <td>Queue Time</td>
-            <td>100 years</td>
-          </tr>
-          <tr>
-            <td>Oldest</td>
-            <td>5 hours</td>
-          </tr>
-          <tr>
-            <td>Items</td>
-            <td>8</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </div>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
   <script src="${request.static_url('backend:static/javascript/semantic.min.js')}"></script>
+  <script src="${request.static_url('backend:static/javascript/jquery.tablesort.min.js')}"></script>
+  <script src="${request.static_url('backend:static/javascript/main.js')}"></script>
 </body>
 </html>

@@ -63,7 +63,7 @@
             <tr>
               <th class="descending">Age</th>
               <th>State</th>
-              <th class="eight wide">Title</th>
+              <th class="nice wide">Title</th>
               <th><i class="chat icon"></i></th>
             </tr>
           </thead>

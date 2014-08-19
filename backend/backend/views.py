@@ -21,9 +21,14 @@ from .models import (
 @view_config(route_name='home', renderer='templates/dashboard.pt')
 def dashboard(request):
     #reviews = DBSession.query(Review).group_by(Review.review_category_id).all()
-    reviews = DBSession.query(Review).filter(Review.state != 'REVIEWED', Review.state != 'NEW', Review.state != 'IN PROGRESS').order_by(Review.updated).all()
+    reviews = DBSession.query(Review).filter(Review.state != 'REVIEWED', Review.state != 'NEW', Review.state != 'IN PROGRESS', Review.state != 'CLOSED').order_by(Review.updated).all()
     incoming = DBSession.query(Review).filter_by(state='NEW').order_by(Review.updated).all()
     return dict(reviews=reviews, incoming=incoming)
+
+
+@view_config(route_name='find_user', renderer='templates/search_user.pt')
+def find_user(request):
+    return dict()
 
 
 @view_config(route_name='view_user', renderer='templates/user.pt')
