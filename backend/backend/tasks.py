@@ -88,6 +88,36 @@ def map_lp_state(state):
     return states[state.lower()]
 
 
+def create_series(series):
+    try:
+        s = DBSession.query(Series).filter_by(slug=series.lower()).one()
+    except:
+        pass
+    else:
+        return s
+
+    with transaction.manager:
+        s = Series(slug=series.lower(), name=series)
+        DBSession.add(s)
+
+    return DBSession.query(Series).filter_by(slug=series.lower()).one()
+
+
+def create_project(name):
+    try:
+        p = DBSession.query(Project).filter_by(name=name.lower()).one()
+    except:
+        pass
+    else:
+        return p
+
+    with transaction.manager:
+        p = Project(name=name.lower())
+        DBSession.add(p)
+
+    return create_project(name)
+
+
 def create_review_from_merge(task):
     try:
         DBSession.query(Review).filter_by(api_url=task.self_link).one()
@@ -97,7 +127,7 @@ def create_review_from_merge(task):
         return
     print(task)
     with transaction.manager:
-        title = "Merge %s into %s" % (task.source_branch.display_name,
+        title = "%s into %s" % (task.source_branch.display_name,
                                       task.target_branch.display_name)
         r = Review(title=title, url=task.web_link, type='UPDATE',
                    state=map_lp_state(task.queue_status),
@@ -152,7 +182,7 @@ def parse_comments(comments, review):
         with transaction.manager:
             s = determine_sentiment(m.vote)
             u = create_user(m.author)
-            v = ReviewVote(vote=s, comment_id=m.self_link)
+            v = ReviewVote(vote=s, comment_id=m.self_link, created=m.date_created)
             print("Inserting %s (%s) %s" % (m.self_link, s, u.name))
             v.owner = u
             v.review = review

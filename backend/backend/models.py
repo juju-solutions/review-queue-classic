@@ -34,6 +34,7 @@ class Review(Base):
     source_id = Column(Integer, ForeignKey('source.id'))
     project_id = Column(Integer, ForeignKey('project.id'))
     user_id = Column(Integer, ForeignKey('user.id'))
+    series_id = Column(Integer, ForeignKey('series.id'))
 
     title = Column(Text)
     type = Column(Enum('NEW', 'UPDATE'))
@@ -48,6 +49,7 @@ class Review(Base):
     source = relationship('Source')
     project = relationship('Project')
     owner = relationship('User', backref=backref('reviews'))
+    series = relationship('Series', backref=backref('reviews'))
 
     @pyramid.decorator.reify
     def positive_votes(self):
@@ -75,9 +77,14 @@ class ReviewVote(Base):
     review_id = Column(Integer, ForeignKey('review.id'))
 
     vote = Column(Enum('POSITIVE', 'NEGATIVE', 'COMMENT'))
+    created = Column(DateTime)
 
     owner = relationship('User', backref=backref('votes'))
     review = relationship('Review', backref=backref('votes'))
+
+    @pyramid.decorator.reify
+    def updated(self):
+        return self.review.updated
 
 
 class ReviewCategory(Base):
@@ -127,10 +134,15 @@ class Source(Base):
     slug = Column(Text)
 
 
+class Series(Base):
+    __tablename__ = 'series'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    slug = Column(Text)
+
+
 class Project(Base):
     __tablename__ = 'project'
     id = Column(Integer, primary_key=True)
-    source_id = Column(Integer, ForeignKey('source.id'))
-    source = relationship('Source')
     name = Column(Text)
     url = Column(Text)
