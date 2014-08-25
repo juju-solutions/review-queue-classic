@@ -1,4 +1,5 @@
 import re
+import time
 import transaction
 
 from .models import (
@@ -124,7 +125,9 @@ def create_review_from_merge(task):
     except:
         pass
     else:
+        time.sleep(1)
         return
+
     print(task)
     with transaction.manager:
         title = "%s into %s" % (task.source_branch.display_name,
@@ -154,6 +157,7 @@ def create_review_from_bug(task, bug):
     except:
         pass
     else:
+        time.sleep(1)
         return
     print(bug)
     with transaction.manager:
@@ -269,10 +273,29 @@ class GithubReview(object):
     pass
 
 
-def refresh_record(record):
+def refresh_all():
+    r = DBSession.query(Review).all()
+    lp = get_lp()
+    for review in r:
+        refresh(review)
+
+
+def refresh_bug(record):
+    lp = get_lp()
+    item = lp.load(record.api_url)
+
+    record.state = bug_state(item)
+    record.title = item.title
+
+
+
+def refresh(record):
     if not record.api_url:
         return False
 
-    lp = get_lp()
-    item = lp.load(record.api_url)
-    record.state = map_lp_state(item.status)
+    if record.type == 'NEW':
+        refresh_bug(record)
+    elif record.type == 'UPDATE':
+        refresh_merge(record)
+    else:
+        raise Exception('Turn down for what')
