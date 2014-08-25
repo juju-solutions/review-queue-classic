@@ -68,8 +68,6 @@
               ${len(review.votes)}
             </td>
             <td>
-              <i class="attention circular red icon link" data-content="This requires follow up from the submitter"></i>
-              <i class="heart circular icon link" data-content="Waiting on response or review"></i>
             </td>
           </tr>
         </tbody>
