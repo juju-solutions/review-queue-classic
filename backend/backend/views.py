@@ -31,6 +31,18 @@ def find_user(request):
     return dict()
 
 
+@view_config(route_name='show_review', renderer='templates/show_review.pt')
+@view_config(route_name='show_reviews', renderer='templates/show_review.pt')
+def review(req):
+    review_id = req.matchdict['review']
+    review = DBSession.query(Review).filter_by(id=review_id).first()
+
+    if not review:
+        return HTTPNotFound('No such review')
+
+    return dict(review=review)
+
+
 @view_config(route_name='view_user', renderer='templates/user.pt')
 def user(request):
     username = request.matchdict['username']

@@ -19,5 +19,7 @@ def main(global_config, **settings):
     config.add_route('home', '/')
     config.add_route('view_user', '/user/{username}')
     config.add_route('find_user', '/user/+me')
+    config.add_route('show_review', '/review/{review}')
+    config.add_route('show_reviews', '/reviews/{review}')
     config.scan()
     return config.make_wsgi_app()
