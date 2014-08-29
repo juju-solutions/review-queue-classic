@@ -13,6 +13,7 @@ from .models import (
 
 from .helpers import get_lp
 from sqlalchemy import engine_from_config
+from sqlalchemy import orm
 
 from pyramid.paster import (
     get_appsettings,
@@ -92,7 +93,7 @@ def map_lp_state(state):
 def create_series(series):
     try:
         s = DBSession.query(Series).filter_by(slug=series.lower()).one()
-    except:
+    except orm.exc.NoResultFound:
         pass
     else:
         return s
@@ -107,7 +108,7 @@ def create_series(series):
 def create_project(name):
     try:
         p = DBSession.query(Project).filter_by(name=name.lower()).one()
-    except:
+    except orm.exc.NoResultFound:
         pass
     else:
         return p
@@ -120,22 +121,19 @@ def create_project(name):
 
 
 def create_review_from_merge(task):
-    try:
-        DBSession.query(Review).filter_by(api_url=task.self_link).one()
-    except:
-        pass
-    else:
-        time.sleep(1)
-        return
-
-    print(task)
     with transaction.manager:
+        r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+
+        if not r:
+            r = Review(type='UPDATE', api_url=task.self_link,
+                       created=task.date_created.replace(tzinfo=None))
+
+        print(task)
         title = "%s into %s" % (task.source_branch.display_name,
-                                      task.target_branch.display_name)
-        r = Review(title=title, url=task.web_link, type='UPDATE',
-                   state=map_lp_state(task.queue_status),
-                   api_url=task.self_link,
-                   created=task.date_created.replace(tzinfo=None))
+                                task.target_branch.display_name)
+        r.url = task.web_link
+        r.title = title=title
+        r.state = map_lp_state(task.queue_status)
         r.owner = create_user(task.registrant)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
         comments = task.all_comments
@@ -147,37 +145,34 @@ def create_review_from_merge(task):
 
         DBSession.add(r)
 
-    review = DBSession.query(Review).filter_by(api_url=task.self_link).one()
-    parse_comments(task.all_comments, review)
+    parse_comments(task.all_comments, r)
 
 
 def create_review_from_bug(task, bug):
-    try:
-        DBSession.query(Review).filter_by(api_url=task.self_link).one()
-    except:
-        pass
-    else:
-        time.sleep(1)
-        return
-    print(bug)
     with transaction.manager:
-        r = Review(title=bug.title, url=task.web_link, type='NEW',
-                   state=bug_state(task), api_url=task.self_link,
-                   created=task.date_created,
-                   updated=bug.date_last_message if bug.date_last_message > bug.date_last_updated else bug.date_last_updated)
+        r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+
+        if not r:
+            r = Review(type='NEW', api_url=task.self_link,
+                       created=task.date_created.replace(tzinfo=None))
+
+        print(bug)
+        r.title = bug.title
+        r.url = task.web_link
+        r.state = bug_state(task)
+        r.updated = bug.date_last_message.replace(tzinfo=None) if bug.date_last_message > bug.date_last_updated else bug.date_last_updated.replace(tzinfo=None)
         r.owner = create_user(task.owner)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
         DBSession.add(r)
 
-    parse_messages(bug.messages,
-                  DBSession.query(Review).filter_by(api_url=task.self_link).one())
+    parse_messages(bug.messages, r)
 
 
 def parse_comments(comments, review):
     for m in comments:
         try:
             DBSession.query(ReviewVote).filter_by(comment_id=m.self_link).one()
-        except:
+        except orm.exc.NoResultFound:
             pass
         else:
             print(m.self_link)
@@ -186,7 +181,7 @@ def parse_comments(comments, review):
         with transaction.manager:
             s = determine_sentiment(m.vote)
             u = create_user(m.author)
-            v = ReviewVote(vote=s, comment_id=m.self_link, created=m.date_created)
+            v = ReviewVote(vote=s, comment_id=m.self_link, created=m.date_created.replace(tzinfo=None))
             print("Inserting %s (%s) %s" % (m.self_link, s, u.name))
             v.owner = u
             v.review = review
@@ -202,7 +197,7 @@ def parse_messages(comments, review):
 
         try:
             DBSession.query(ReviewVote).filter_by(comment_id=m.self_link).one()
-        except:
+        except orm.exc.NoResultFound:
             pass
         else:
             print(m.self_link)
@@ -219,18 +214,16 @@ def parse_messages(comments, review):
 
 
 def create_user(profile):
-    try:
-        p = DBSession.query(Profile).filter_by(url=profile.web_link).one()
-    except:
-        pass
-    else:
+    p = DBSession.query(Profile).filter_by(url=profile.web_link).first()
+
+    if p:
         return p.user
 
     with transaction.manager:
         # It's an LP profile
         p = Profile(name=profile.display_name, username=profile.name,
                     url=profile.web_link)
-        p.source = DBSession.query(Source).filter_by(slug='lp').one()
+        p.source = DBSession.query(Source).filter_by(slug='lp').first()
 
         r = User(name=profile.display_name,
                  is_charmer=profile in charmers.members)
@@ -238,7 +231,7 @@ def create_user(profile):
         DBSession.add(r)
         DBSession.add(p)
 
-    return DBSession.query(Profile).filter_by(url=profile.web_link).one().user
+    return DBSession.query(Profile).filter_by(url=profile.web_link).first().user
 
 
 def determine_sentiment(text):

@@ -42,8 +42,8 @@ class Review(Base):
     api_url = Column(Text)
     state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
                         'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP'))
-    created = Column(DateTime, default=datetime.datetime.utcnow)
-    updated = Column(DateTime, default=datetime.datetime.utcnow)
+    created = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+    updated = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
     category = relationship('ReviewCategory')
     source = relationship('Source')
@@ -77,7 +77,7 @@ class ReviewVote(Base):
     review_id = Column(Integer, ForeignKey('review.id'))
 
     vote = Column(Enum('POSITIVE', 'NEGATIVE', 'COMMENT'))
-    created = Column(DateTime)
+    created = Column(DateTime(timezone=True))
 
     owner = relationship('User', backref=backref('votes'))
     review = relationship('Review', backref=backref('votes'))
@@ -112,8 +112,8 @@ class Profile(Base):
     name = Column(Text)
     username = Column(Text)
     url = Column(Text)
-    created = Column(DateTime, default=datetime.datetime.utcnow)
-    updated = Column(DateTime, onupdate=datetime.datetime.utcnow)
+    created = Column(DateTime(timezone=False), default=datetime.datetime.utcnow)
+    updated = Column(DateTime(timezone=False), onupdate=datetime.datetime.utcnow)
 
     source = relationship('Source')
     user = relationship('User', backref=backref('profiles'))
