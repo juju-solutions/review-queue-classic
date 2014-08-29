@@ -61,7 +61,7 @@
         </thead>
         <tbody>
           <tr tal:repeat="review reviews">
-            <td>${review.age}</td>
+            <td data-sort="${review.age.split(' ')[0]}">${review.age}</td>
             <td>${review.state}</td>
             <td><a href="${review.url}">${review.title}</a></td>
             <td>
