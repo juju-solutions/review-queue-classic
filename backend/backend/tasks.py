@@ -27,6 +27,20 @@ DBSession.configure(bind=engine)
 charmers = get_lp().people['charmers']
 
 
+def wait_a_second(method):
+    def wrapper(*args, **kw):
+        start = int(round(time.time() * 1000))
+        result = method(*args, **kw)
+        end = int(round(time.time() * 1000))
+
+        comptime = end - start
+        if comptime < 1000:
+            time.sleep((1000 - comptime) / 1000)
+
+        return result
+    return wrapper
+
+
 def import_from_lp():
     get_bugs()
     get_merges()
@@ -120,6 +134,7 @@ def create_project(name):
     return create_project(name)
 
 
+@wait_a_second
 def create_review_from_merge(task):
     with transaction.manager:
         r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
@@ -148,6 +163,7 @@ def create_review_from_merge(task):
     parse_comments(task.all_comments, r)
 
 
+@wait_a_second
 def create_review_from_bug(task, bug):
     with transaction.manager:
         r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
