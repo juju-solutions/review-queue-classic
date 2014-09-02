@@ -1,4 +1,5 @@
 import re
+import sqlalchemy
 
 from datetime import date
 
@@ -21,7 +22,12 @@ from .models import (
 @view_config(route_name='home', renderer='templates/dashboard.pt')
 def dashboard(request):
     #reviews = DBSession.query(Review).group_by(Review.review_category_id).all()
-    reviews = DBSession.query(Review).filter(Review.state != 'REVIEWED', Review.state != 'NEW', Review.state != 'IN PROGRESS', Review.state != 'CLOSED').order_by(Review.updated).all()
+    reviews = DBSession.query(Review).filter(Review.state != 'REVIEWED',
+                                             Review.state != 'NEW',
+                                             Review.state != 'IN PROGRESS',
+                                             Review.state != 'CLOSED',
+                                             Review.state != 'MERGED',
+                                             Review.state != 'ABANDONDED').order_by(Review.updated).all()
     incoming = DBSession.query(Review).filter_by(state='NEW').order_by(Review.updated).all()
     return dict(reviews=reviews, incoming=incoming)
 
@@ -32,7 +38,7 @@ def find_user(request):
 
 
 @view_config(route_name='show_review', renderer='templates/show_review.pt')
-@view_config(route_name='show_reviews', renderer='templates/show_review.pt')
+@view_config(route_name='show_reviews', renderer='json')
 def review(req):
     review_id = req.matchdict['review']
     review = DBSession.query(Review).filter_by(id=review_id).first()
@@ -40,7 +46,7 @@ def review(req):
     if not review:
         return HTTPNotFound('No such review')
 
-    return dict(review=review)
+    return dict((col.name, str(getattr(review, col.name))) for col in sqlalchemy.orm.class_mapper(review.__class__).mapped_table.c)
 
 
 @view_config(route_name='view_user', renderer='templates/user.pt')

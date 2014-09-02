@@ -80,7 +80,8 @@ def bug_state(bug_task):
 
 
 def map_lp_state(state):
-    # 'NEW', 'PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'READY', 'ABANDONDED', IN PROGRESS
+    # 'NEW', 'PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'READY', 'ABANDONDED',
+    # 'IN PROGRESS', 'FOLLOW UP'
     states = {'new': 'PENDING',
               'incomplete': 'REVIEWED',
               'opinion': 'CLOSED',
@@ -94,9 +95,9 @@ def map_lp_state(state):
               'needs review': 'PENDING',
               'work in progress': 'IN PROGRESS',
               'approved': 'READY',
-              'rejected': 'CLOSED',
-              'merged': 'CLOSED',
-              'superseded': 'CLOSED',
+              'rejected': 'ABANDONDED',
+              'merged': 'MERGED',
+              'superseded': 'ABANDONDED',
               'queued': 'PENDING',
               'code failed to merge': 'FOLLOW UP',
              }
@@ -158,9 +159,13 @@ def create_review_from_merge(task):
         else:
             r.updated = task.date_created.replace(tzinfo=None)
 
+        if r.state in ['REVIEWED', 'CLOSED'] and len(comments) > 0:
+            if comments[len(comments)-1].author == task.registrant:
+                r.state = 'FOLLOW UP'
+
         DBSession.add(r)
 
-    parse_comments(task.all_comments, r)
+    parse_comments(comments, r)
 
 
 @wait_a_second
@@ -179,6 +184,11 @@ def create_review_from_bug(task, bug):
         r.updated = bug.date_last_message.replace(tzinfo=None) if bug.date_last_message > bug.date_last_updated else bug.date_last_updated.replace(tzinfo=None)
         r.owner = create_user(task.owner)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
+
+        if r.state in ['REVIEWED', 'CLOSED']:
+            if bug.messages[len(bug.messages)-1].owner == task.assignee:
+                r.state = 'FOLLOW UP'
+
         DBSession.add(r)
 
     parse_messages(bug.messages, r)
