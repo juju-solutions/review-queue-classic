@@ -1,6 +1,7 @@
 import re
 import time
 import transaction
+import datetime
 
 from .models import (
     DBSession,
@@ -111,10 +112,33 @@ def create_project(name):
     return create_project(name)
 
 
+def skip_refresh(r):
+    if not r or not r.syncd:
+        return False
+
+    rt = {'_default': 15,
+          'REVIEWED': 60,
+          'IN PROGRESS': 60,
+          'MERGED': 720,
+          'ABANDONDED': 720,
+          'CLOSED': 720,
+         }
+
+    timedelta = datetime.datetime.utcnow() - r.syncd
+    diff = divmod(timedelta.days * 86400 + timedelta.seconds, 60)
+    timelimit = rt['_default'] if r.state not in rt else rt[r.state]
+    return diff[0] > timelimit
+
+
 @wait_a_second
 def create_review_from_merge(task):
+    active = True
     with transaction.manager:
         r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+
+        if skip_refresh(r):
+            print("SKIP: %s" % task)
+            return
 
         if not r:
             r = Review(type='UPDATE', api_url=task.self_link,
@@ -128,6 +152,7 @@ def create_review_from_merge(task):
         r.state = map_lp_state(task.queue_status)
         r.owner = create_user(task.registrant)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
+        r.syncd = datetime.datetime.utcnow()
 
         if task.target_branch.sourcepackage:
             series_data = task.target_branch.sourcepackage.distroseries
@@ -150,13 +175,20 @@ def create_review_from_merge(task):
 
         DBSession.add(r)
 
-    parse_comments(comments, r)
+    if active:
+        parse_comments(comments, r)
+    else:
+        print("Old ass shit, skipping")
 
 
 @wait_a_second
 def create_review_from_bug(task, bug):
     with transaction.manager:
         r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+
+        if skip_refresh(r):
+            print("SKIP: %s" % task)
+            return
 
         if not r:
             r = Review(type='NEW', api_url=task.self_link,
@@ -169,6 +201,7 @@ def create_review_from_bug(task, bug):
         r.updated = bug.date_last_message.replace(tzinfo=None) if bug.date_last_message > bug.date_last_updated else bug.date_last_updated.replace(tzinfo=None)
         r.owner = create_user(task.owner)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
+        r.syncd = datetime.datetime.utcnow()
 
         if r.state in ['REVIEWED', 'CLOSED']:
             if bug.messages[len(bug.messages)-1].owner == task.assignee:

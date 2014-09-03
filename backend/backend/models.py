@@ -44,6 +44,9 @@ class Review(Base):
                         'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP'))
     created = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     updated = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+    syncd = Column(DateTime(timezone=True),
+                   default=datetime.datetime.utcnow,
+                   onupdate=datetime.datetime.utcnow)
 
     category = relationship('ReviewCategory')
     source = relationship('Source')
