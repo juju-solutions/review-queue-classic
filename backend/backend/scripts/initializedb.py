@@ -17,6 +17,7 @@ from ..models import (
     Source,
     Base,
     Review,
+    Series,
     )
 
 
@@ -41,10 +42,18 @@ def main(argv=sys.argv):
         DBSession.add(Source(name='Github', slug='gh'))
         DBSession.add(Source(name='git', slug='git'))
         DBSession.add(Source(name='Launchpad', slug='lp'))
+
         DBSession.add(ReviewCategory(slug='charm', name='Charm'))
         DBSession.add(ReviewCategory(slug='tool', name='tool'))
         DBSession.add(ReviewCategory(slug='documentation', name='documentation'))
         DBSession.add(ReviewCategory(slug='askubuntu', name='Ask Ubuntu'))
+
+        DBSession.add(Series(slug='oneiric', name='oneiric', active=False))
+        DBSession.add(Series(slug='precise', name='precise', active=True))
+        DBSession.add(Series(slug='quantal', name='quantal', active=False))
+        DBSession.add(Series(slug='raring', name='raring', active=False))
+        DBSession.add(Series(slug='saucy', name='saucy', active=False))
+        DBSession.add(Series(slug='trusty', name='trusty', active=True))
 
 #    with transaction.manager:
 #        r = Review(title='New charm apache2', url='http://marcoceppi.com',

@@ -9,6 +9,8 @@ from .models import (
     Profile,
     User,
     ReviewVote,
+    Series
+)
 
 from .helpers import (
     get_lp,
@@ -94,21 +96,6 @@ def map_lp_state(state):
     return states[state.lower()]
 
 
-def create_series(series):
-    try:
-        s = DBSession.query(Series).filter_by(slug=series.lower()).one()
-    except orm.exc.NoResultFound:
-        pass
-    else:
-        return s
-
-    with transaction.manager:
-        s = Series(slug=series.lower(), name=series)
-        DBSession.add(s)
-
-    return DBSession.query(Series).filter_by(slug=series.lower()).one()
-
-
 def create_project(name):
     try:
         p = DBSession.query(Project).filter_by(name=name.lower()).one()
@@ -141,6 +128,15 @@ def create_review_from_merge(task):
         r.state = map_lp_state(task.queue_status)
         r.owner = create_user(task.registrant)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
+
+        if task.target_branch.sourcepackage:
+            series_data = task.target_branch.sourcepackage.distroseries
+            r.series = create_series(series_data)
+            active = r.series.active
+
+        if r.series and not r.series.active:
+            r.state = 'ABANDONDED'
+
         comments = task.all_comments
 
         if len(comments) > 0:
@@ -247,6 +243,20 @@ def create_user(profile):
         DBSession.add(p)
 
     return DBSession.query(Profile).filter_by(url=profile.web_link).first().user
+
+
+def create_series(series):
+    series_slug = series.name.replace(' ', '_')
+    s = DBSession.query(Series).filter_by(slug=series_slug).first()
+
+    if s:
+        return s
+
+    with transaction.manager:
+        s = Series(slug=series_slug, name=series.name, active=series.active)
+        DBSession.add(s)
+
+    return DBSession.query(Series).filter_by(slug=series_slug).one()
 
 
 def determine_sentiment(text):
