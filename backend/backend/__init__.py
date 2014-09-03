@@ -1,10 +1,19 @@
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 
+from pyramid.events import subscriber
+from pyramid.events import BeforeRender
+
 from .models import (
     DBSession,
     Base,
     )
+
+
+@subscriber(BeforeRender)
+def add_global(event):
+    import pkg_resources
+    event['version'] = pkg_resources.get_distribution("backend").version
 
 
 def main(global_config, **settings):

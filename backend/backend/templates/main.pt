@@ -40,6 +40,22 @@
       </div>
     </div>
     <metal:content define-slot="content" />
+    <div class="ui horizontal icon divider">
+      <i class="circular heart icon"></i>
+    </div>
+    <div class="ui three column grid">
+      <div class="row">
+        <div class="column">
+          <div>${version}</div>
+        </div>
+        <div class="column center">
+          <div>Made with <i class="icon github alternative"></i><a href="https://github.com/marcoceppi/review-queue">love</a></div>
+        </div>
+        <div class="column">
+          <div>Made with <i class="icon github alternative"></i><a href="https://github.com/marcoceppi/review-queue">love</a></div>
+        </div>
+      </div>
+    </div>
   </div>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
   <script src="${request.static_url('backend:static/javascript/semantic.min.js')}"></script>
