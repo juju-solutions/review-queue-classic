@@ -127,7 +127,7 @@ def skip_refresh(r):
     timedelta = datetime.datetime.utcnow() - r.syncd
     diff = divmod(timedelta.days * 86400 + timedelta.seconds, 60)
     timelimit = rt['_default'] if r.state not in rt else rt[r.state]
-    return diff[0] > timelimit
+    return diff[0] < timelimit
 
 
 @wait_a_second
