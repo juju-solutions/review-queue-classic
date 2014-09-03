@@ -17,6 +17,14 @@ a:hover {
   color: #dd4814!important;
 }
 
+.ui.grid > .column.center {
+  text-align: center;
+}
+
+.ui.grid > .column.right {
+  text-align: right;
+}
+
 .positive {
   color: #33CC00;
 }
