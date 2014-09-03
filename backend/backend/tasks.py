@@ -9,9 +9,12 @@ from .models import (
     Profile,
     User,
     ReviewVote,
+
+from .helpers import (
+    get_lp,
+    wait_a_second,
 )
 
-from .helpers import get_lp
 from sqlalchemy import engine_from_config
 from sqlalchemy import orm
 
@@ -25,20 +28,6 @@ settings = get_appsettings('development.ini', options={})
 engine = engine_from_config(settings, 'sqlalchemy.')
 DBSession.configure(bind=engine)
 charmers = get_lp().people['charmers']
-
-
-def wait_a_second(method):
-    def wrapper(*args, **kw):
-        start = int(round(time.time() * 1000))
-        result = method(*args, **kw)
-        end = int(round(time.time() * 1000))
-
-        comptime = end - start
-        if comptime < 1000:
-            time.sleep((1000 - comptime) / 1000)
-
-        return result
-    return wrapper
 
 
 def import_from_lp():
