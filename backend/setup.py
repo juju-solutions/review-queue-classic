@@ -18,10 +18,11 @@ requires = [
     'zope.sqlalchemy',
     'waitress',
     'launchpadlib',
+    'alembic',
     ]
 
 setup(name='backend',
-      version='0.0',
+      version='1.1.0',
       description='backend',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
