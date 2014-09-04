@@ -23,8 +23,12 @@
         <i class="filter icon"></i> Query
       </a>
       <a class="item">
-        <i class="question icon"></i> About
+        <i class="info letter icon"></i> About
       </a>
+      <a class="item">
+        <i class="trophy icon"></i> Stats
+      </a>
+      <div class="item"></div>
       <div class="right menu">
         <!-- <div class="ui dropdown item">
           Language <div class="ui label">51</div><i class="dropdown icon"></i>
