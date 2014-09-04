@@ -13,9 +13,7 @@
 <body id="home">
   <div class="ui page grid">
     <div class="ui pointing orange menu">
-      <a class="item">
-        Review Queue
-      </a>
+      <a class="item">Review Queue</a>
       <a class="active item">
         <i class="home icon"></i> Dashboard
       </a>
@@ -50,7 +48,6 @@
     <div class="three wide column">
       <div>${version}</div>
     </div>
-
     <div class="ten wide column center">
       <div class="center">Made with <i class="icon github alternative"></i><a href="https://github.com/marcoceppi/review-queue">love</a>. <i class="icon bug"></i>Bugs? <a href="https://github.com/marcoceppi/review-queue">Never!</a></div>
     </div>
