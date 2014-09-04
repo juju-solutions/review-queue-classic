@@ -19,7 +19,7 @@
         </thead>
         <tbody>
           <tr tal:repeat="review incoming">
-            <td>${review.age}</td>
+            <td data-sort-value="${review.age.split(' ')[0]}">${review.age}</td>
             <td><a href="${review.url}">${review.title}</a></td>
             <td><a href="/user/${review.owner.profiles[0].username}">${review.owner.name}</a></td>
             <td>${len(review.votes)}</td>
@@ -44,18 +44,15 @@
             <th>State</th>
             <th class="eleven wide">Name</th>
             <th><i class="chat icon"></i></th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
           <tr tal:repeat="review reviews">
-            <td data-sort="${review.age.split(' ')[0]}" data-content="${review.updated}">${review.age}</td>
-            <td data-sort="${review.state.replace(' ', '')}" class="state ${review.state.replace(' ', '').lower()}" data-variation="inverted">${review.state}</td>
+            <td data-sort-value="${review.age.split(' ')[0]}" data-content="${review.updated}">${review.age}</td>
+            <td data-sort-value="${review.state.replace(' ', '')}" class="state ${review.state.replace(' ', '').lower()}" data-variation="inverted">${review.state}</td>
             <td><a href="${review.url}">${review.title}</a></td>
             <td>
               ${len(review.votes)}
-            </td>
-            <td>
             </td>
           </tr>
         </tbody>

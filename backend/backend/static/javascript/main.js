@@ -23,7 +23,7 @@ $(function() {
     })
   ;
   $('.state').each(function() {
-    $(this).data('content', states[$(this).data('sort').toLowerCase()]);
+    $(this).data('content', states[$(this).data('sort-value').toLowerCase()]);
     $(this).data('title', $(this).text());
   });
 

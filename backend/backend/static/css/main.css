@@ -17,6 +17,10 @@ a:hover {
   color: #dd4814!important;
 }
 
+.state {
+  cursor: pointer;
+}
+
 .ui.grid > .column.center {
   text-align: center;
 }
