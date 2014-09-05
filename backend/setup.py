@@ -19,6 +19,7 @@ requires = [
     'waitress',
     'launchpadlib',
     'alembic',
+    'marshmallow',
     ]
 
 setup(name='backend',

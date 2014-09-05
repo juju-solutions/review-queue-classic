@@ -18,6 +18,12 @@ from .models import (
     ReviewVote,
     )
 
+from .helpers import (
+    UserSerializer,
+    ReviewSerializer,
+    ReviewedSerializer,
+)
+
 
 @view_config(route_name='home', renderer='templates/dashboard.pt')
 def dashboard(request):
@@ -49,7 +55,15 @@ def review(req):
     return dict((col.name, str(getattr(review, col.name))) for col in sqlalchemy.orm.class_mapper(review.__class__).mapped_table.c)
 
 
-@view_config(route_name='view_user', renderer='templates/user.pt')
+@view_config(route_name='view_user', accept="application/json", renderer='json')
+def user_json(request):
+    data = user(request)
+
+    return dict(user=UserSerializer(data['user'], exclude=('reviews', )).data,
+                reviews=ReviewedSerializer(data['reviews'], many=True).data,
+                submitted=ReviewSerializer(data['submitted'], exclude=('owner', ), many=True).data)
+
+@view_config(route_name='view_user', accept="text/html", renderer='templates/user.pt')
 def user(request):
     username = request.matchdict['username']
     user = DBSession.query(Profile).filter_by(username=username).first().user
