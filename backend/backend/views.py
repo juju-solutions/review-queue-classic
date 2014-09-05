@@ -59,6 +59,7 @@ def user(request):
     reviews = (DBSession.query(ReviewVote)
                         .filter_by(owner=user)
                         .join(ReviewVote.review)
+                        .filter(Review.owner != user)
                         .group_by(Review).order_by(Review.updated)).all()
 
     return dict(user=user, reviews=reviews, submitted=submitted)
