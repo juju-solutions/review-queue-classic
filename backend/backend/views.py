@@ -43,6 +43,17 @@ def find_user(request):
     return dict()
 
 
+@view_config(route_name='search_user', renderer='json')
+def search_user(request):
+    return dict()
+
+
+@view_config(route_name='query', renderer='templates/search.pt')
+@view_config(route_name='query_results', renderer='templates/search.pt')
+def serach(request):
+    return dict(results={})
+
+
 @view_config(route_name='show_review', renderer='templates/show_review.pt')
 @view_config(route_name='show_reviews', renderer='json')
 def review(req):
