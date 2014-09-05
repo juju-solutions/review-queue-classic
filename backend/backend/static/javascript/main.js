@@ -26,7 +26,34 @@ $(function() {
     $(this).data('content', states[$(this).data('sort-value').toLowerCase()]);
     $(this).data('title', $(this).text());
   });
-
   $('.state').popup();
   $('[data-content]').popup();
+  $('.user.select').select2({
+    minimumInputLength: 2,
+    ajax: {
+      url: '/user/+search',
+      dataType: 'json',
+      data: function (term) {
+        return {
+          q: term
+        };
+      },
+      results: function (data, page) {
+        return {results: data};
+      }
+    },
+    initSelection: function(element, callback) {
+      var id = $(element).val();
+      if(id !== "") {
+        $.ajax("/user/"+id, {
+          dataType: 'json'
+        }).done(function(data) { callback(data.user); });
+      }
+    },
+    formatResult: movieFormatResult, // omitted for brevity, see the source of this page
+    formatSelection: movieFormatSelection,  // omitted for brevity, see the source of this page
+    dropdownCssClass: "bigdrop",
+    escapeMarkup: function (m) { return m; }
+  });
+  $('.select').select2();
 });

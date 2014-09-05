@@ -9,6 +9,9 @@
   <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" type="text/css" href="${request.static_url('backend:static/css/semantic.min.css')}">
   <link rel="stylesheet" type="text/css" href="${request.static_url('backend:static/css/main.css')}">
+  <link rel="stylesheet" type="text/css" href="${request.static_url('backend:static/css/chosen.min.css')}">
+  <link rel="stylesheet" type="text/css" href="${request.static_url('backend:static/css/select2.css')}">
+  <metal:content define-slot="css" />
 </head>
 <body id="home">
   <div class="ui page grid">
@@ -58,6 +61,9 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
   <script src="${request.static_url('backend:static/javascript/semantic.min.js')}"></script>
   <script src="${request.static_url('backend:static/javascript/jquery.tablesort.min.js')}"></script>
+  <script src="${request.static_url('backend:static/javascript/jquery.chosen.min.js')}"></script>
+  <script src="${request.static_url('backend:static/javascript/select2.min.js')}"></script>
   <script src="${request.static_url('backend:static/javascript/main.js')}"></script>
+  <metal:content define-slot="js" />
 </body>
 </html>
