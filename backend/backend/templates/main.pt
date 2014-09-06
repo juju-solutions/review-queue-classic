@@ -58,7 +58,8 @@
       <div><a href="">Changelog</a></div>
     </div>
   </div>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
+  <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js"></script> -->
+  <script src="${request.static_url('backend:static/javascript/jquery.min.js')}"></script>
   <script src="${request.static_url('backend:static/javascript/semantic.min.js')}"></script>
   <script src="${request.static_url('backend:static/javascript/jquery.tablesort.min.js')}"></script>
   <script src="${request.static_url('backend:static/javascript/jquery.chosen.min.js')}"></script>
