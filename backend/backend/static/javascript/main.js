@@ -14,12 +14,21 @@ $(function() {
   $('.ui.checkbox').checkbox();
   $('.ui.checkbox input')
     .change(function() {
-      $(this).parents().eq(3).find('.' + $(this).attr('name')).toggle();
+      $(this)
+        .parents()
+        .eq(3)
+        .find('.' + $(this).attr('name'))
+        .toggle()
+      ;
     })
   ;
   $('h1 .icon.filter')
     .click(function() {
-      $(this).closest('.review').children('.filter.controls').slideToggle();
+      $(this)
+        .closest('.review')
+        .children('.filter.controls')
+        .slideToggle()
+      ;
     })
   ;
   $('.review .state').each(function() {
@@ -28,32 +37,37 @@ $(function() {
   });
   $('.state').popup();
   $('[data-content]').popup();
-  $('.user.select').select2({
-    minimumInputLength: 2,
-    ajax: {
-      url: '/user/+search',
-      dataType: 'json',
-      data: function (term) {
-        return {
-          q: term
-        };
+  $('.user.select')
+    .select2({
+      minimumInputLength: 2,
+      ajax: {
+        url: '/user/+search',
+        dataType: 'json',
+        data: function (term) {
+          return {
+            q: term
+          };
+        },
+        results: function (data, page) {
+          return {results: data};
+        }
       },
-      results: function (data, page) {
-        return {results: data};
-      }
-    },
-    initSelection: function(element, callback) {
-      var id = $(element).val();
-      if(id !== "") {
-        $.ajax("/user/"+id, {
-          dataType: 'json'
-        }).done(function(data) { callback(data.user); });
-      }
-    },
-    //formatResult: movieFormatResult, // omitted for brevity, see the source of this page
-    //formatSelection: movieFormatSelection,  // omitted for brevity, see the source of this page
-    dropdownCssClass: "bigdrop",
-    escapeMarkup: function (m) { return m; }
-  });
+      initSelection: function(element, callback) {
+        var id = $(element).val();
+        if(id !== "") {
+          $.ajax("/user/"+id, {
+            dataType: 'json'
+          }).done(function(data) { callback(data.user); });
+        }
+      },
+      formatResult: function(data) {
+        var markup = "<div>" + data.name + "</div>";
+        return markup;
+      },
+      //formatSelection: movieFormatSelection,  // omitted for brevity, see the source of this page
+      dropdownCssClass: "bigdrop",
+      escapeMarkup: function (m) { return m; }
+    })
+  ;
   $('.select').select2();
 });
