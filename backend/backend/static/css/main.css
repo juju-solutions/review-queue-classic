@@ -80,3 +80,7 @@ h1 .icon {
   padding-left: 3em!important;
   padding-right: 1.2em!important;
 }
+
+.ui.inverted.popup .header {
+  background-color: transparent;
+}
