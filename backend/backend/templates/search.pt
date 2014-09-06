@@ -23,17 +23,7 @@
             </select>
           </div>
           <div class="field">
-            <select class="user select" multiple data-placeholder="Reviewer">
-              <option value="NEW">New</option>
-              <option value="IN PROGRESS">In Progress</option>
-              <option value="PENDING">Pending</option>
-              <option value="REVIEWED">Reviewed</option>
-              <option value="FOLLOW UP">Follow Up</option>
-              <option value="READY">Ready</option>
-              <option value="MERGED">Merged</option>
-              <option value="CLOSED">Closed</option>
-              <option value="ABANDONDED">Abandonded</option>
-            </select>
+            <input type="hidden" class="user select">
           </div>
         </div>
       </div>

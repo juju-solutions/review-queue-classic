@@ -22,7 +22,7 @@ $(function() {
       $(this).closest('.review').children('.filter.controls').slideToggle();
     })
   ;
-  $('.state').each(function() {
+  $('.review .state').each(function() {
     $(this).data('content', states[$(this).data('sort-value').toLowerCase()]);
     $(this).data('title', $(this).text());
   });
@@ -50,8 +50,8 @@ $(function() {
         }).done(function(data) { callback(data.user); });
       }
     },
-    formatResult: movieFormatResult, // omitted for brevity, see the source of this page
-    formatSelection: movieFormatSelection,  // omitted for brevity, see the source of this page
+    //formatResult: movieFormatResult, // omitted for brevity, see the source of this page
+    //formatSelection: movieFormatSelection,  // omitted for brevity, see the source of this page
     dropdownCssClass: "bigdrop",
     escapeMarkup: function (m) { return m; }
   });

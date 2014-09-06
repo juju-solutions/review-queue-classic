@@ -47,7 +47,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr tal:repeat="review reviews">
+          <tr class="review" tal:repeat="review reviews">
             <td data-sort-value="${review.age.split(' ')[0]}" data-content="${review.updated}">${review.age}</td>
             <td data-sort-value="${review.state.replace(' ', '')}" class="state ${review.state.replace(' ', '').lower()}" data-variation="inverted">${review.state}</td>
             <td><a href="${review.url}">${review.title}</a></td>
