@@ -127,7 +127,7 @@ def skip_refresh(r):
     timedelta = datetime.datetime.utcnow() - r.syncd
     diff = divmod(timedelta.days * 86400 + timedelta.seconds, 60)
     timelimit = rt['_default'] if r.state not in rt else rt[r.state]
-    return diff[0] < timelimit
+    return (diff[0] < timelimit, timelimit - diff[0])
 
 
 @wait_a_second
@@ -135,9 +135,9 @@ def create_review_from_merge(task):
     active = True
     with transaction.manager:
         r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
-
-        if skip_refresh(r):
-            print("SKIP: %s" % task)
+        skip_data = skip_refresh(r)
+        if skip_data[0]:
+            print("SKIP: %s (%s)" % (task, skip_data[1]))
             return
 
         if not r:
@@ -186,8 +186,9 @@ def create_review_from_bug(task, bug):
     with transaction.manager:
         r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
 
-        if skip_refresh(r):
-            print("SKIP: %s" % task)
+        skip_data = skip_refresh(r)
+        if skip_data[0]:
+            print("SKIP: %s (%s)" % (task, skip_data[1]))
             return
 
         if not r:
