@@ -1,7 +1,20 @@
 <metal:main use-macro="load: main.pt">
   <p metal:fill-slot="content">
+    <div class="ui active modal search" tal:condition="python:not user and me">
+      <div class="header">Enter your username</div>
+      <div class="content">
+        <div class="ui form">
+          <div class="ui text field">
+            <input type="text" title="username" data-placeholder="username">
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ui button green">Go!</div>
+      </div>
+    </div>
     <div class="eleven wide column">
-      <div class="review">
+      <div tal:condition="python:submitted" class="review">
         <h1>Submitted Reviews (${len(submitted)})<i class="filter icon"></i></h1>
         <div class="ui form filter controls">
           <div class="ui five fields">
@@ -65,7 +78,7 @@
           </tbody>
         </table>
       </div>
-      <div class="review">
+      <div tal:condition="python:reviews" class="review">
         <h1>Charms Reviewed (${len(reviews)})<i class="filter icon"></i></h1>
         <div class="ui form filter controls">
           <div class="ui five fields">
@@ -130,7 +143,7 @@
         </table>
       </div>
     </div>
-    <div class="five wide column">
+    <div tal:condition="python:user" class="five wide column">
       <h1>${user.name} <img class="ui avatar image" src="https://api.launchpad.net/1.0/~${user.profiles[0].username}/mugshot"></h1>
       <div class="center badges">
         <div class="ui green label">Charmer</div>

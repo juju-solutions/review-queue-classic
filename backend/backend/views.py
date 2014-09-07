@@ -38,14 +38,29 @@ def dashboard(request):
     return dict(reviews=reviews, incoming=incoming)
 
 
-@view_config(route_name='find_user', renderer='templates/search_user.pt')
-def find_user(request):
-    return dict()
+@view_config(route_name='find_user', renderer='templates/user.pt')
+def find_user(req):
+    username = req.params.get('user')
+    lpuser = req.cookies.get('lpuser')
+
+    if not lpuser and username:
+        profile = DBSession.query(Profile).filter_by(username=username).first()
+        if not profile:
+            return dict(error='No profile found')
+        lpuser = username
+
+    if not lpuser:
+        return dict(user=dict(), reviews=dict(), submitted=dict(), me=True)
+
+    req.matchdict['username'] = lpuser
+    return user(req)
 
 
 @view_config(route_name='search_user', renderer='json')
-def search_user(request):
-    return dict()
+def search_user(req):
+    query = req.params['q']
+    matches = DBSession.query(User).filter(User.name.like('%%%s%%' % query)).all()
+    return UserSerializer(matches, many=True, exclude=('reviews', )).data
 
 
 @view_config(route_name='query', renderer='templates/search.pt')
