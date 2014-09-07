@@ -137,7 +137,7 @@ def create_review_from_merge(task):
         r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
         skip_data = skip_refresh(r)
         if skip_data[0]:
-            print("SKIP: %s (%s)" % (task, skip_data[1]))
+            print("SKIP: %s (%s mins left)" % (task, skip_data[1]))
             return
 
         if not r:
@@ -188,7 +188,7 @@ def create_review_from_bug(task, bug):
 
         skip_data = skip_refresh(r)
         if skip_data[0]:
-            print("SKIP: %s (%s)" % (task, skip_data[1]))
+            print("SKIP: %s (%s mins left)" % (task, skip_data[1]))
             return
 
         if not r:
