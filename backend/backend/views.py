@@ -182,7 +182,11 @@ def lock_review(request):
         return dict(error='Unable to find review %s' % review_id)
 
     if review.locked:
-        return dict(error='Review already locked by: %s' % review.locker.name)
+        if review.locker != user:
+            return dict(error='Review already locked by: %s' % review.locker.name)
+
+        review.unlock()
+        return dict(error=None)
 
     review.lock(user)
     return dict(error=None)
