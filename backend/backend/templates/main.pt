@@ -18,10 +18,10 @@
   <div class="ui page grid">
     <div class="ui pointing orange menu">
       <a class="item">Review Queue</a>
-      <a class="active item" href="${request.route_url('home')}">
+      <a class="active item" href="${request.route_path('home')}">
         <i class="home icon"></i> Dashboard
       </a>
-      <a class="item" href="${request.route_url('query')}">
+      <a class="item" href="${request.route_path('query')}">
         <i class="filter icon"></i> Query
       </a>
       <a class="item">
@@ -42,7 +42,7 @@
         </div> -->
         <div class="item">
           <a class="ui orange button" tal:condition="python:not 'User' in request.session" href="/login/openid">Log-in</a>
-          <a href="${request.route_url('find_user')}" tal:condition="python:'User' in request.session">${request.session['User'].name}</a>
+          <a href="${request.route_path('find_user')}" tal:condition="python:'User' in request.session">${request.session['User'].name}</a>
         </div>
       </div>
     </div>

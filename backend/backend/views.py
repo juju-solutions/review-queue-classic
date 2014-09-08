@@ -34,6 +34,7 @@ from .helpers import (
 )
 
 from tasks import create_user
+from ubuntusso import UBUNTU_SSO
 
 
 log = logging.getLogger(__name__)
@@ -54,19 +55,10 @@ def dashboard(request):
 
 @view_config(route_name='find_user', renderer='templates/user.pt')
 def find_user(req):
-    username = req.params.get('user')
-    lpuser = req.cookies.get('lpuser')
+    if 'User' not in req.session:
+        return HTTPFound(location=req.route_url(UBUNTU_SSO))
 
-    if not lpuser and username:
-        profile = DBSession.query(Profile).filter_by(username=username).first()
-        if not profile:
-            return dict(error='No profile found')
-        lpuser = username
-
-    if not lpuser:
-        return dict(user=dict(), reviews=dict(), submitted=dict(), me=True)
-
-    req.matchdict['username'] = lpuser
+    req.matchdict['username'] = req.session['User'].profiles[0].username
     return user(req)
 
 
