@@ -14,6 +14,31 @@
       </div>
     </div>
     <div class="eleven wide column">
+<div tal:condition="python:locked" class="review">
+        <h1>Locked Reviews (${len(locked)})</h1>
+        <table class="ui table segment sortable">
+          <thead>
+            <tr>
+              <th>Age</th>
+              <th>State</th>
+              <th class="eleven wide">Title</th>
+              <th class="descending">
+                <i class="icon lock"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="${review.state.lower().replace(' ', '')}" tal:repeat="review locked">
+              <td>${review.age}</td>
+              <td>${review.state}</td>
+              <td><a href="${review.url}">${review.title}</a></td>
+              <td data-sort-value="${review.locked.strftime('%s')}">
+                <i class="icon already unlock" data-content="Locked ${review.locked}" data-review-id="${review.id}"></i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div tal:condition="python:submitted" class="review">
         <h1>Submitted Reviews (${len(submitted)})<i class="filter icon"></i></h1>
         <div class="ui form filter controls">

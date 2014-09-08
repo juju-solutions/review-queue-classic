@@ -100,6 +100,24 @@ $(function() {
     })
   ;
   $('select.select').select2();
+  $('.already.unlock').click(function() {
+    var review_id = $(this).data('review-id');
+    var self = $(this);
+    var parent = self.closest('tr');
+    self.addClass('loading');
+
+    $.ajax("/review/"+review_id+"/lock", {
+      dataType: 'json'
+    }).done(function(data) {
+      self.removeClass('loading');
+      if(data.error) {
+        message('error', 'Failed to unlock', data.error);
+      } else {
+        $(self).popup('hide');
+        parent.remove();
+      }
+    });
+  });
   $('.locker.icon').click(function() {
     var review_id = $(this).data('review-id');
     var self = $(this);

@@ -18,7 +18,8 @@ a:hover {
 }
 
 .state,
-.locker {
+.locker,
+.already.unlock {
   cursor: pointer;
 }
 
