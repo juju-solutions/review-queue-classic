@@ -40,6 +40,7 @@ $(function() {
   $('.user.select')
     .select2({
       minimumInputLength: 2,
+      multiple: true,
       ajax: {
         url: '/user/+search',
         dataType: 'json',
@@ -64,10 +65,12 @@ $(function() {
         var markup = "<div>" + data.name + "</div>";
         return markup;
       },
-      //formatSelection: movieFormatSelection,  // omitted for brevity, see the source of this page
+      formatSelection: function(data) {
+        return data.name
+      },
       dropdownCssClass: "bigdrop",
       escapeMarkup: function (m) { return m; }
     })
   ;
-  $('.select').select2();
+  $('select.select').select2();
 });
