@@ -25,8 +25,8 @@
             <td><a href="/user/${review.owner.profiles[0].username}">${review.owner.name}</a></td>
             <td>${len(review.votes)}</td>
             <td>
-              <i data-review-id="${review.id}" class="locker unlock icon" tal:condition="python:not review.locked"></i>
-              <i data-review-id="${review.id}" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>
+              <i data-review-id="${review.id}" data-sort-value="1" class="locker unlock icon" tal:condition="python:not review.locked"></i>
+              <i data-review-id="${review.id}" data-sort-value="0" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>
             </td>
           </tr>
         </tbody>
@@ -61,8 +61,8 @@
               ${len(review.votes)}
             </td>
             <td>
-              <i data-review-id="${review.id}" class="locker unlock icon" tal:condition="python:not review.locked"></i>
-              <i data-review-id="${review.id}" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>
+              <i data-review-id="${review.id}" data-sort-value="1" class="locker unlock icon" tal:condition="python:not review.locked"></i>
+              <i data-review-id="${review.id}" data-sort-value="0" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>
             </td>
           </tr>
         </tbody>
