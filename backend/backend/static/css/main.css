@@ -17,7 +17,8 @@ a:hover {
   color: #dd4814!important;
 }
 
-.state {
+.state,
+.locker {
   cursor: pointer;
 }
 
