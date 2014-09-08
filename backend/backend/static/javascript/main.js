@@ -16,7 +16,6 @@ var message = function(type, title, content) {
   t.removeClass('template hidden');
   t.addClass(type);
   $('.msg.row:last').after(f);
-  console.log('fart', f);
   var m = $('.msg.row:last div.message');
   m.find('.header').text(title);
   m.find('.content').text(content);
