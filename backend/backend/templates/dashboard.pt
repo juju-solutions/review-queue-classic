@@ -13,7 +13,7 @@
           <tr>
             <th class="descending">Age</th>
             <th class="eleven wide">Title</th>
-            <th class="two">Owner</th>
+            <th class="two">Submitter</th>
             <th><i class="chat icon"></i></th>
           </tr>
         </thead>
