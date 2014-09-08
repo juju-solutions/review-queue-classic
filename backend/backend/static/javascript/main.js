@@ -56,9 +56,9 @@ $(function() {
       initSelection: function(element, callback) {
         var id = $(element).val();
         if(id !== "") {
-          $.ajax("/user/"+id, {
+          $.ajax("/user/id/"+id, {
             dataType: 'json'
-          }).done(function(data) { callback(data.user); });
+          }).done(function(data) { callback(data); });
         }
       },
       formatResult: function(data) {
