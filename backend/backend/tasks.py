@@ -114,7 +114,7 @@ def create_project(name):
 
 def skip_refresh(r):
     if not r or not r.syncd:
-        return (False, 0)
+        return (False, None)
 
     rt = {'_default': 15,
           'REVIEWED': 60,
