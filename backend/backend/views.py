@@ -63,10 +63,51 @@ def search_user(req):
     return UserSerializer(matches, many=True, exclude=('reviews', )).data
 
 
-@view_config(route_name='query', renderer='templates/search.pt')
 @view_config(route_name='query_results', renderer='templates/search.pt')
+def saved_search(request):
+    q = request.matchdict['filter']
+
+    #return search(request, q)
+
+
+
+@view_config(route_name='query', renderer='templates/search.pt')
 def serach(request):
-    return dict(results={})
+    filters = {'reviewer': None,
+               'owner': None,
+               'from': None,
+               'to': None,
+               'source': None,
+               'state': None,
+              }
+    if not request.params:
+        return dict(results=None)
+
+    for f in filters:
+        if f in request.params:
+            val = request.params[f]
+            if ',' in val:
+                val = val.split(',')
+            filters[f] = val
+
+    q = DBSession.query(Review)
+
+    if filters['owner']:
+        if not isinstance(filters['owner'], list):
+            filters['owner'] = [filters['owner']]
+        q = q.filter(Review.user_id.in_(filters['owner']))
+    if filters['state']:
+        if not isinstance(filters['state'], list):
+            filters['state'] = [filters['state']]
+        q = q.filter(Review.state.in_(filters['state']))
+    if filters['reviewer']:
+        if not isinstance(filters['reviewer'], list):
+            filters['reviewer'] = [filters['reviewer']]
+        q = (q.join(ReviewVote.review)
+              .filter(ReviewVote.user_id.in_(filters['reviewer'])))
+
+    data = q.all()
+    return dict(results=data)
 
 
 @view_config(route_name='show_review', renderer='templates/show_review.pt')

@@ -1,10 +1,11 @@
 <metal:main use-macro="load: main.pt">
   <p metal:fill-slot="content">
     <div class="sixteen wide column">
-      <div class="ui form segment">
+      <form method="GET" action="/search" class="ui query search form segment">
         <div class="three fields">
           <div class="field">
-            <select class="state select" multiple data-placeholder="Review State">
+            <label>Review State</label>
+            <select name="state" class="state select" multiple data-placeholder="Review State">
               <option value="NEW">New</option>
               <option value="IN PROGRESS">In Progress</option>
               <option value="PENDING">Pending</option>
@@ -17,22 +18,47 @@
             </select>
           </div>
           <div class="field">
-            <select class="source select" multiple data-placeholder="Source">
+            <label>Source</label>
+            <select name="source" class="source select" multiple data-placeholder="Source">
               <option value="lp">LaunchPad</option>
               <option value="gh">Github</option>
             </select>
           </div>
           <div class="field">
-            <input type="hidden" class="user select">
+            <label>Reviewer</label>
+            <input name="reviewer" type="hidden" data-placeholder="Reviewer" class="user select">
           </div>
         </div>
-      </div>
-      <table class="ui table segment sortable">
+        <div class="five fields">
+          <div class="field two">
+            <label>Owner</label>
+            <input name="owner" type="hidden" id="owner" data-placeholder="Review Submitter" class="user select">
+          </div>
+          <div class="field">
+            <label>From</label>
+            <div class="ui mini icon input">
+              <input name="from" type="text" value="2012-05-15 21:05" class="datetime" id="datetimepicker" data-date-format="yyyy/mm/dd hh:ii">
+              <i class="calendar icon"></i>
+            </div>
+          </div>
+          <div class="field">
+            <label>To</label>
+            <div class="ui mini icon input">
+              <input name="to" type="text" value="2012-05-15 21:05" class="datetime" id="datetimepicker" data-date-format="yyyy/mm/dd hh:ii">
+              <i class="calendar icon"></i>
+            </div>
+          </div>
+          <div class="field">
+            <input type=submit class="ui small blue submit button bottom" value=Search>
+          </div>
+        </div>
+      </form>
+      <table class="ui table segment sortable" tal:condition="python:results">
         <thead>
           <tr>
             <th class="descending">Age</th>
             <th class="eleven wide">Title</th>
-            <th class="two">Owner</th>
+            <th class="two">Submitter</th>
             <th><i class="chat icon"></i></th>
           </tr>
         </thead>
