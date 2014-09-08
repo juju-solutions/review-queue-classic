@@ -169,6 +169,25 @@ def serach(request):
     return dict(results=data, filters=filters)
 
 
+@view_config(route_name='lock_review', renderer='json')
+def lock_review(request):
+    if 'User' not in request.session:
+        return dict(error='Not logged in')
+
+    review_id = request.matchdict['review']
+    review = DBSession.query(Review).get(review_id)
+    user = request.session['User']
+
+    if not review:
+        return dict(error='Unable to find review %s' % review_id)
+
+    if review.locked:
+        return dict(error='Review already locked by: %s' % review.locker.name)
+
+    review.lock(user)
+    return dict(error=None)
+
+
 @view_config(route_name='show_review', renderer='templates/show_review.pt')
 @view_config(route_name='show_reviews', renderer='json')
 def review(req):

@@ -28,6 +28,7 @@ def main(global_config, **settings):
     config.add_route('search_user', '/user/+search')
     config.add_route('id_user', '/user/id/{id}')
     config.add_route('view_user', '/user/{username}')
+    config.add_route('lock_review', '/review/{review}/lock')
     config.add_route('show_review', '/review/{review}')
     config.add_route('show_reviews', '/reviews/{review}')
     config.add_route('query', '/search')

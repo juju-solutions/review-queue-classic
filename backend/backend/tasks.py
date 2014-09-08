@@ -149,6 +149,7 @@ def create_review_from_merge(task):
                                 task.target_branch.display_name)
         r.url = task.web_link
         r.title = title=title
+        prevstate = r.state
         r.state = map_lp_state(task.queue_status)
         r.owner = create_user(task.registrant)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
@@ -164,10 +165,14 @@ def create_review_from_merge(task):
 
         comments = task.all_comments
 
+        prev = r.updated
         if len(comments) > 0:
             r.updated = comments[len(comments)-1].date_created.replace(tzinfo=None)
         else:
             r.updated = task.date_created.replace(tzinfo=None)
+
+        if r.updated != prev or r.state != prevstate:
+            r.unlock()
 
         if r.state in ['REVIEWED', 'CLOSED'] and len(comments) > 0:
             if comments[len(comments)-1].author == task.registrant:
@@ -198,8 +203,13 @@ def create_review_from_bug(task, bug):
         print(bug)
         r.title = bug.title
         r.url = task.web_link
+        prevstate = r.state
         r.state = bug_state(task)
+        prev = r.updated
         r.updated = bug.date_last_message.replace(tzinfo=None) if bug.date_last_message > bug.date_last_updated else bug.date_last_updated.replace(tzinfo=None)
+
+        if r.updated != prev or r.state != prevstate:
+            r.unlock()
         r.owner = create_user(task.owner)
         r.source = DBSession.query(Source).filter_by(slug='lp').one()
         r.syncd = datetime.datetime.utcnow()

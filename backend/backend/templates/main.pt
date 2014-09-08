@@ -46,6 +46,13 @@
         </div>
       </div>
     </div>
+    <div class="messages">
+      <div class="ui floating message template hidden">
+        <i class="close icon"></i>
+        <div class="header"></div>
+        <div class="content"></div>
+      </div>
+    </div>
     <metal:content define-slot="content" />
     <div class="ui horizontal icon divider">
       <i class="circular heart icon"></i>

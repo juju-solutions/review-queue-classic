@@ -237,3 +237,7 @@ h1 .icon {
 .ui.button.bottom {
   margin-top: 1.2em;
 }
+
+.ui.message.hide {
+  display: none;
+}

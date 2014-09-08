@@ -9,6 +9,18 @@ var states = {
   'merged': 'This fix has landed and is in the charm store!'
 };
 
+var message = function(type, title, content) {
+  var t = $('.message.template').clone(true);
+  t.removeClass('template hidden')
+  t.addClass(type+' visible');
+  t.find('.header').text(title);
+  t.find('.content').text(content);
+  t.find('.close').bind('click', function() {
+    $(this).closest('.message').fadeOut();
+  });
+  t.appendTo('.messages');
+};
+
 $(function() {
   $('table').tablesort();
   $('.ui.checkbox').checkbox();
@@ -82,4 +94,17 @@ $(function() {
     })
   ;
   $('select.select').select2();
+  $('.locker.icon').click(function() {
+    var review_id = $(this).data('review-id');
+    var self = $(this);
+    $.ajax("/review/"+review_id+"/lock", {
+      dataType: 'json'
+    }).done(function(data) {
+      if(data.error) {
+        message('error', 'Failed to lock', data.error);
+      } else {
+        self.removeClass('unlock').addClass('lock');
+      };
+    });
+  });
 });

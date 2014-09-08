@@ -15,6 +15,7 @@
             <th class="eleven wide">Title</th>
             <th class="two">Submitter</th>
             <th><i class="chat icon"></i></th>
+            <th><i class="checked checkbox icon"></i></th>
           </tr>
         </thead>
         <tbody>
@@ -23,6 +24,10 @@
             <td><a href="${review.url}">${review.title}</a></td>
             <td><a href="/user/${review.owner.profiles[0].username}">${review.owner.name}</a></td>
             <td>${len(review.votes)}</td>
+            <td>
+              <i data-review-id="${review.id}" class="locker unlock icon" tal:condition="python:not review.locked"></i>
+              <i data-review-id="${review.id}" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -44,6 +49,7 @@
             <th>State</th>
             <th class="eleven wide">Name</th>
             <th><i class="chat icon"></i></th>
+              <th><i class="checked checkbox icon"></i></th>
           </tr>
         </thead>
         <tbody>
@@ -53,6 +59,10 @@
             <td><a href="${review.url}">${review.title}</a></td>
             <td>
               ${len(review.votes)}
+            </td>
+            <td>
+              <i data-review-id="${review.id}" class="locker unlock icon" tal:condition="python:not review.locked"></i>
+              <i data-review-id="${review.id}" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>
             </td>
           </tr>
         </tbody>
