@@ -26,25 +26,25 @@
           </div>
           <div class="field">
             <label>Reviewer</label>
-            <input name="reviewer" type="hidden" data-placeholder="Reviewer" class="user select">
+            <input name="reviewer" type="hidden" value="${','.join(filters['reviewer'])}" data-placeholder="Reviewer" class="user select">
           </div>
         </div>
         <div class="five fields">
           <div class="field two">
             <label>Owner</label>
-            <input name="owner" type="hidden" id="owner" data-placeholder="Review Submitter" class="user select">
+            <input name="owner" type="hidden" value="${','.join(filters['owner'])}" id="owner" data-placeholder="Review Submitter" class="user select">
           </div>
           <div class="field">
             <label>From</label>
             <div class="ui mini icon input">
-              <input name="from" type="text" value="2012-05-15 21:05" class="datetime" id="datetimepicker" data-date-format="yyyy/mm/dd hh:ii">
+              <input name="from" type="text" value="${filters['from']}" class="datetime" id="datetimepicker" data-date-format="yyyy/mm/dd hh:ii">
               <i class="calendar icon"></i>
             </div>
           </div>
           <div class="field">
             <label>To</label>
             <div class="ui mini icon input">
-              <input name="to" type="text" value="2012-05-15 21:05" class="datetime" id="datetimepicker" data-date-format="yyyy/mm/dd hh:ii">
+              <input name="to" type="text" value="${filters['to']}" class="datetime" id="datetimepicker" data-date-format="yyyy/mm/dd hh:ii">
               <i class="calendar icon"></i>
             </div>
           </div>

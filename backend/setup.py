@@ -20,6 +20,7 @@ requires = [
     'launchpadlib',
     'alembic',
     'marshmallow',
+    'python-dateutil',
     ]
 
 setup(name='backend',

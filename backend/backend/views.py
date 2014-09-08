@@ -1,7 +1,13 @@
 import re
+import base64
 import sqlalchemy
+from dateutil import parser
 
-from datetime import date
+from datetime import (
+    date,
+    datetime,
+    timedelta,
+)
 
 from pyramid.httpexceptions import (
     HTTPFound,
@@ -70,18 +76,19 @@ def saved_search(request):
     #return search(request, q)
 
 
-
 @view_config(route_name='query', renderer='templates/search.pt')
 def serach(request):
-    filters = {'reviewer': None,
-               'owner': None,
+    filters = {'reviewer': [],
+               'owner': [],
                'from': None,
                'to': None,
                'source': None,
-               'state': None,
+               'state': [],
               }
     if not request.params:
-        return dict(results=None)
+        week_ago = datetime.now() - timedelta(days=7)
+        return dict(results=None,
+                    filters={'from': week_ago.strftime("%Y-%m-%d %H:%M")})
 
     for f in filters:
         if f in request.params:
@@ -100,6 +107,12 @@ def serach(request):
         if not isinstance(filters['state'], list):
             filters['state'] = [filters['state']]
         q = q.filter(Review.state.in_(filters['state']))
+    if filters['from']:
+        td = parser.parse(filters['from'])
+        q = q.filter(Review.updated >= td)
+    if filters['to']:
+        td = parser.parse(filters['to'])
+        q = q.filter(Review.updated <= td)
     if filters['reviewer']:
         if not isinstance(filters['reviewer'], list):
             filters['reviewer'] = [filters['reviewer']]
@@ -107,7 +120,7 @@ def serach(request):
               .filter(ReviewVote.user_id.in_(filters['reviewer'])))
 
     data = q.all()
-    return dict(results=data)
+    return dict(results=data, filters=filters)
 
 
 @view_config(route_name='show_review', renderer='templates/show_review.pt')
@@ -122,6 +135,13 @@ def review(req):
     return dict((col.name, str(getattr(review, col.name))) for col in sqlalchemy.orm.class_mapper(review.__class__).mapped_table.c)
 
 
+@view_config(route_name='id_user', accept="application/json", renderer='json')
+def id_json(request):
+    data = DBSession.query(User).get(request.matchdict['id'])
+
+    return UserSerializer(data, exclude=('reviews', )).data
+
+
 @view_config(route_name='view_user', accept="application/json", renderer='json')
 def user_json(request):
     data = user(request)
@@ -129,6 +149,7 @@ def user_json(request):
     return dict(user=UserSerializer(data['user'], exclude=('reviews', )).data,
                 reviews=ReviewedSerializer(data['reviews'], many=True).data,
                 submitted=ReviewSerializer(data['submitted'], exclude=('owner', ), many=True).data)
+
 
 @view_config(route_name='view_user', accept="text/html", renderer='templates/user.pt')
 def user(request):
