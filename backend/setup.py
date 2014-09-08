@@ -26,7 +26,7 @@ requires = [
     ]
 
 setup(name='backend',
-      version='1.2.0',
+      version='1.3.0',
       description='backend',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
