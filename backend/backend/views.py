@@ -87,8 +87,8 @@ def serach(request):
               }
     if not request.params:
         week_ago = datetime.now() - timedelta(days=7)
-        return dict(results=None,
-                    filters={'from': week_ago.strftime("%Y-%m-%d %H:%M")})
+        filters['from'] = week_ago.strftime("%Y-%m-%d %H:%M")
+        return dict(results=None, filters=filters)
 
     for f in filters:
         if f in request.params:
