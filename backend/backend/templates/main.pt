@@ -46,11 +46,11 @@
         </div>
       </div>
     </div>
-    <div class="messages">
-      <div class="ui floating message template hidden">
+    <div class="msg row template">
+      <div class="ui small floating message column sixteen template hidden">
         <i class="close icon"></i>
         <div class="header"></div>
-        <div class="content"></div>
+        <p class="content"></p>
       </div>
     </div>
     <metal:content define-slot="content" />

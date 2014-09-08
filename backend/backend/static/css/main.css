@@ -242,3 +242,7 @@ h1 .icon {
 .ui.message.hide {
   display: none;
 }
+
+.msg.row.template {
+  display: none;
+}

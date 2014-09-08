@@ -10,15 +10,22 @@ var states = {
 };
 
 var message = function(type, title, content) {
-  var t = $('.message.template').clone(true);
-  t.removeClass('template hidden')
-  t.addClass(type+' visible');
-  t.find('.header').text(title);
-  t.find('.content').text(content);
-  t.find('.close').bind('click', function() {
-    $(this).closest('.message').fadeOut();
+  var f = $('.msg.row.template').clone(true);
+  f.removeClass('template');
+  var t = f.find('.message');
+  t.removeClass('template hidden');
+  t.addClass(type);
+  $('.msg.row:last').after(f);
+  console.log('fart', f);
+  var m = $('.msg.row:last div.message');
+  m.find('.header').text(title);
+  m.find('.content').text(content);
+  m.css('height', 'auto');
+  m.find('.close').bind('click', function() {
+    $(this).closest('.message').fadeOut(function() {
+      $(this).closest('.message').closest('.msg.row').remove();
+    });
   });
-  t.appendTo('.messages');
 };
 
 $(function() {
