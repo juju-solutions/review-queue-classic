@@ -111,7 +111,7 @@ $(function() {
       self.removeClass('loading');
       if(data.error) {
         message('error', 'Failed to lock', data.error);
-        $("html, body").animate({ scrollTop: 45 }, "slow");
+        $("html, body").animate({scrollTop: 45}, "slow");
       } else {
         self.toggleClass('unlock lock');
       };
