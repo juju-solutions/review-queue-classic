@@ -21,6 +21,8 @@ requires = [
     'alembic',
     'marshmallow',
     'python-dateutil',
+    'velruse',
+    'requests',
     ]
 
 setup(name='backend',

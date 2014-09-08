@@ -1,6 +1,8 @@
 import re
 import base64
 import sqlalchemy
+import logging
+
 from dateutil import parser
 
 from datetime import (
@@ -22,13 +24,19 @@ from .models import (
     Profile,
     User,
     ReviewVote,
-    )
+)
 
 from .helpers import (
     UserSerializer,
     ReviewSerializer,
     ReviewedSerializer,
+    get_lp,
 )
+
+from tasks import create_user
+
+
+log = logging.getLogger(__name__)
 
 
 @view_config(route_name='home', renderer='templates/dashboard.pt')
@@ -75,6 +83,44 @@ def saved_search(request):
 
     #return search(request, q)
 
+
+@view_config(route_name='login', renderer='json')
+def login(req):
+    mode = req.params.get('openid.mode')
+    log.debug('mode: %s' % mode)
+
+    if mode == 'cancel':
+        log.debug('User canceled. Why? Who cares')
+        return HTTPFound(location=req.route_url('home'))
+
+    if mode == 'id_res':
+        print(req.params)
+        claimed = req.params.get('openid.claimed_id')
+        username = req.params.get('openid.sreg.nickname')
+
+        profile = DBSession.query(Profile).filter_by(claimed=claimed).first()
+
+        if not profile:
+            log.debug('Never logged in before? Welcome.')
+            # So, first time login. Try to match username?
+            profile = DBSession.query(Profile).filter_by(username=username).first()
+
+        if profile:
+            user = profile.user
+
+        if not profile:
+            log.debug('Fuck off, you havent done jack shit')
+            # Okay, so we still don't have a profile. wtf guys. GET YOUR REVIEW ON. Create a user for now? Sure.
+            lp = get_lp()
+            person = lp.load('https://api.launchpad.net/1.0/~%s' % username)
+            user = create_user(person)
+            profile = user.profile[0]
+
+        if not profile.claimed:
+            profile.claimed = claimed
+
+    req.session['user'] = user.id
+    return HTTPFound(location=req.route_url('home'))
 
 @view_config(route_name='query', renderer='templates/search.pt')
 def serach(request):

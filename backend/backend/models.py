@@ -10,7 +10,7 @@ from sqlalchemy import (
     Enum,
     DateTime,
     ForeignKey,
-    )
+)
 
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -19,7 +19,7 @@ from sqlalchemy.orm import (
     sessionmaker,
     relationship,
     backref,
-    )
+)
 
 from zope.sqlalchemy import ZopeTransactionExtension
 
@@ -35,6 +35,7 @@ class Review(Base):
     project_id = Column(Integer, ForeignKey('project.id'))
     user_id = Column(Integer, ForeignKey('user.id'))
     series_id = Column(Integer, ForeignKey('series.id'))
+    lock_id = Column(Integer, ForeignKey('user.id'))
 
     title = Column(Text)
     type = Column(Enum('NEW', 'UPDATE'))
@@ -42,17 +43,22 @@ class Review(Base):
     api_url = Column(Text)
     state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
                         'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP'))
+
     created = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     updated = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     syncd = Column(DateTime(timezone=True),
                    default=datetime.datetime.utcnow,
                    onupdate=datetime.datetime.utcnow)
+    locked = Column(DateTime(timezone=True))
 
     category = relationship('ReviewCategory')
     source = relationship('Source')
     project = relationship('Project')
-    owner = relationship('User', backref=backref('reviews'))
     series = relationship('Series', backref=backref('reviews'))
+    owner = relationship('User', foreign_keys=[user_id],
+                         backref=backref('reviews'))
+    locker = relationship('User', foreign_keys=[lock_id],
+                          backref=backref('locks'))
 
     @pyramid.decorator.reify
     def positive_votes(self):
@@ -70,6 +76,14 @@ class Review(Base):
             return '%s d' % d.days
 
         return '%s h' % hours
+
+    def lock(self, user):
+        self.locked = datetime.datetime.utcnow()
+        self.locker = user
+
+    def unlock(self):
+        self.locked = None
+        self.locker = None
 
 
 class ReviewVote(Base):
@@ -104,6 +118,8 @@ class User(Base):
 
     name = Column(Text)
     is_charmer = Column(Boolean, default=False)
+    is_community = Column(Boolean, default=False)
+    is_contributor = Column(Boolean, default=False)
 
 
 class Profile(Base):
@@ -115,6 +131,8 @@ class Profile(Base):
     name = Column(Text)
     username = Column(Text)
     url = Column(Text)
+    claimed = Column(Text)
+
     created = Column(DateTime(timezone=False), default=datetime.datetime.utcnow)
     updated = Column(DateTime(timezone=False), onupdate=datetime.datetime.utcnow)
 
@@ -125,8 +143,9 @@ class Profile(Base):
 class Address(Base):
     __tablename__ = 'emails'
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'))
     profile_id = Column(Integer, ForeignKey('profile.id'))
-    profile = relationship('Profile', backref=backref('addresses'))
+    user = relationship('User', backref=backref('addresses'))
     email = Column(Text)
 
 

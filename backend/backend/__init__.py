@@ -1,19 +1,13 @@
 from pyramid.config import Configurator
-from sqlalchemy import engine_from_config
+from pyramid.session import SignedCookieSessionFactory
 
-from pyramid.events import subscriber
-from pyramid.events import BeforeRender
+from sqlalchemy import engine_from_config
+from ubuntusso import add_ubuntu_login
 
 from .models import (
     DBSession,
     Base,
-    )
-
-
-@subscriber(BeforeRender)
-def add_global(event):
-    import pkg_resources
-    event['version'] = pkg_resources.get_distribution("backend").version
+)
 
 
 def main(global_config, **settings):
@@ -22,11 +16,15 @@ def main(global_config, **settings):
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
+    session_factory = SignedCookieSessionFactory('whateve')
+
     config = Configurator(settings=settings)
+    config.set_session_factory(session_factory)
     config.include('pyramid_chameleon')
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
     config.add_route('find_user', '/user/+me')
+    config.add_route('login', '/login/openid/callback')
     config.add_route('search_user', '/user/+search')
     config.add_route('id_user', '/user/id/{id}')
     config.add_route('view_user', '/user/{username}')
@@ -35,4 +33,6 @@ def main(global_config, **settings):
     config.add_route('query', '/search')
     config.add_route('query_results', '/search/{filter}')
     config.scan()
+    add_ubuntu_login(config)
+
     return config.make_wsgi_app()

@@ -4,6 +4,29 @@ import time
 from launchpadlib.launchpad import Launchpad
 from marshmallow import Serializer, fields
 
+from pyramid.events import subscriber
+
+from pyramid.events import (
+    BeforeRender,
+    NewRequest,
+)
+
+from .models import (
+    DBSession,
+    User
+)
+
+@subscriber(NewRequest)
+def setup_user(event):
+    if 'user' in event.request.session:
+        event.request.session['User'] = DBSession.query(User).get(event.request.session['user'])
+
+
+@subscriber(BeforeRender)
+def add_global(event):
+    import pkg_resources
+    event['version'] = pkg_resources.get_distribution("backend").version
+
 
 def get_lp(login=False):
     # Make this a factory?

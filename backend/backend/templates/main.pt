@@ -41,7 +41,8 @@
           </div>
         </div> -->
         <div class="item">
-          <div class="ui orange button">Log-in</div>
+          <a class="ui orange button" tal:condition="python:not 'User' in request.session" href="/login/openid">Log-in</a>
+          <a href="#" tal:condition="python:'User' in request.session">${request.session['User'].name}</a>
         </div>
       </div>
     </div>
