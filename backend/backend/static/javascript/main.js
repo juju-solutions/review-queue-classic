@@ -54,11 +54,20 @@ $(function() {
         }
       },
       initSelection: function(element, callback) {
-        var id = $(element).val();
-        if(id !== "") {
+        var refresh = function(id, next) {
+          console.log(id);
           $.ajax("/user/id/"+id, {
             dataType: 'json'
-          }).done(function(data) { callback(data); });
+          }).done(function(data) { next(null, data); });
+        };
+
+        var ids = $(element).val().split(',');
+
+        if(ids) {
+          async.map(ids, refresh, function(err, data) {
+            console.log(data);
+            callback(data);
+          });
         }
       },
       formatResult: function(data) {

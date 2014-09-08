@@ -70,6 +70,7 @@
   <script src="${request.static_url('backend:static/javascript/jquery.chosen.min.js')}"></script>
   <script src="${request.static_url('backend:static/javascript/select2.min.js')}"></script>
   <script src="${request.static_url('backend:static/javascript/datetimepicker.min.js')}"></script>
+  <script src="${request.static_url('backend:static/javascript/async.js')}"></script>
   <script src="${request.static_url('backend:static/javascript/main.js')}"></script>
   <metal:content define-slot="js" />
 </body>
