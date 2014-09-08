@@ -97,13 +97,16 @@ $(function() {
   $('.locker.icon').click(function() {
     var review_id = $(this).data('review-id');
     var self = $(this);
+    self.addClass('loading');
+
     $.ajax("/review/"+review_id+"/lock", {
       dataType: 'json'
     }).done(function(data) {
+      self.removeClass('loading');
       if(data.error) {
         message('error', 'Failed to lock', data.error);
       } else {
-        self.removeClass('unlock').addClass('lock');
+        self.toggleClass('unlock lock');
       };
     });
   });
