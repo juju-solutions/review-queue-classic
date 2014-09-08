@@ -56,7 +56,7 @@ def dashboard(request):
 @view_config(route_name='find_user', renderer='templates/user.pt')
 def find_user(req):
     if 'User' not in req.session:
-        return HTTPFound(location=req.route_url(UBUNTU_SSO))
+        return HTTPFound(location='/login/openid')
 
     req.matchdict['username'] = req.session['User'].profiles[0].username
     return user(req)
