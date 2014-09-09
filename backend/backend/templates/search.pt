@@ -43,6 +43,7 @@
           </div>
         </div>
       </form>
+      <h1>Results (${len(results)})</h1>
       <table class="ui table segment sortable" tal:condition="python:results">
         <thead>
           <tr>
