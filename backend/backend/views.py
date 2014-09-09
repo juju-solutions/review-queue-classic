@@ -157,7 +157,7 @@ def serach(request):
         q = (q.join(ReviewVote.review)
               .filter(ReviewVote.user_id.in_(filters['reviewer'])))
 
-    data = q.all()
+    data = q.order_by(Review.updated).all()
     return dict(results=data, filters=filters)
 
 
