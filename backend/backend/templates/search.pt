@@ -5,17 +5,7 @@
         <div class="three fields">
           <div class="field">
             <label>Review State</label>
-            <select name="state" class="state select" multiple data-placeholder="Review State">
-              <option value="NEW">New</option>
-              <option value="IN PROGRESS">In Progress</option>
-              <option value="PENDING">Pending</option>
-              <option value="REVIEWED">Reviewed</option>
-              <option value="FOLLOW UP">Follow Up</option>
-              <option value="READY">Ready</option>
-              <option value="MERGED">Merged</option>
-              <option value="CLOSED">Closed</option>
-              <option value="ABANDONDED">Abandonded</option>
-            </select>
+            <input type="hidden" class="select review state" name="state" value="${','.join(filters['state'])}" data-placeholder="Review State">
           </div>
           <div class="field">
             <label>Source</label>

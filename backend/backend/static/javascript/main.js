@@ -9,6 +9,18 @@ var states = {
   'merged': 'This fix has landed and is in the charm store!'
 };
 
+var select_states = [
+  {id: 'NEW', text: "New"},
+  {id: 'IN PROGRESS', text: "In Progress"},
+  {id: 'PENDING', text: "Pending"},
+  {id: 'REVIEWED', text: "Reviewed"},
+  {id: 'FOLLOW UP', text: "Follow up"},
+  {id: 'READY', text: "Ready"},
+  {id: 'MERGED', text: "Merged"},
+  {id: 'CLOSED', text: "Closed"},
+  {id: 'ABANDONDED', text: "Abandonded"}
+];
+
 var message = function(type, title, content) {
   var f = $('.msg.row.template').clone(true);
   f.removeClass('template');
@@ -100,6 +112,7 @@ $(function() {
     })
   ;
   $('select.select').select2();
+  $('.select.review.state').select2({data: select_states, multiple: true});
   $('.already.unlock').click(function() {
     var review_id = $(this).data('review-id');
     var self = $(this);
