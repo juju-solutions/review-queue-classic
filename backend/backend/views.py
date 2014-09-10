@@ -86,7 +86,6 @@ def login(req):
         return HTTPFound(location=req.route_url('home'))
 
     if mode == 'id_res':
-        print(req.params)
         claimed = req.params.get('openid.claimed_id')
         username = req.params.get('openid.sreg.nickname')
 
