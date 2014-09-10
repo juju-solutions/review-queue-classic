@@ -58,9 +58,11 @@ def get_bugs():
     branch_filter = "Show only Bugs with linked Branches"
     bugs = charm.searchTasks(linked_branches=branch_filter,
                              status=['New', 'Incomplete', 'Opinion', 'Invalid',
-                                     "Won't fix", 'Confirmed', 'Triaged'
-                                     'In progress', 'Fix committed',
-                                     'Fix released'])
+                                     "Won't Fix", 'Confirmed', 'Triaged',
+                                     'In Progress', 'Fix Committed',
+                                     'Fix Released',
+                                     'Incomplete (with response)',
+                                     'Incomplete (without response)'])
     for bug in bugs:
         if '+source' in bug.web_link:
             continue
@@ -80,9 +82,12 @@ def map_lp_state(state):
     # 'IN PROGRESS', 'FOLLOW UP'
     states = {'new': 'PENDING',
               'incomplete': 'REVIEWED',
+              'incomplete (without response)': 'REVIEWED',
+              'incomplete (with response)': 'FOLLOW UP',
               'opinion': 'CLOSED',
               'invalid': 'CLOSED',
               "won't fix": 'ABANDONDED',
+              "expired": 'ABANDONDED',
               'confirmed': 'PENDING',
               'triaged': 'PENDING',
               'in progress': 'IN PROGRESS',
