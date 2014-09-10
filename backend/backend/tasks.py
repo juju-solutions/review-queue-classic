@@ -56,7 +56,11 @@ def get_bugs():
     lp = get_lp()
     charm = lp.distributions['charms']
     branch_filter = "Show only Bugs with linked Branches"
-    bugs = charm.searchTasks(linked_branches=branch_filter)
+    bugs = charm.searchTasks(linked_branches=branch_filter,
+                             status=['New', 'Incomplete', 'Opinion', 'Invalid',
+                                     "Won't fix", 'Confirmed', 'Triaged'
+                                     'In progress', 'Fix committed',
+                                     'Fix released'])
     for bug in bugs:
         if '+source' in bug.web_link:
             continue
