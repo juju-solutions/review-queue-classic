@@ -56,7 +56,12 @@
         <tbody>
           <tr tal:repeat="review results">
             <td>${review.age}</td>
-            <td><a href="${review.url}">${review.title}</a></td>
+            <td>
+              <a href="${request.route_path('show_review', review=review.id)}">${review.title}</a>
+              <a href="${review.url}">
+                <i class="external url icon"></i>
+              </a>
+            </td>
             <td><a href="/user/${review.owner.profiles[0].username}">${review.owner.name}</a></td>
             <td>${len(review.votes)}</td>
           </tr>
