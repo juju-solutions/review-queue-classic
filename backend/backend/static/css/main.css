@@ -247,3 +247,7 @@ h1 .icon {
 .msg.row.template {
   display: none;
 }
+
+a i.icon {
+  text-decoration: none;
+}

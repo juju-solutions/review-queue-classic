@@ -125,11 +125,11 @@ def skip_refresh(r):
     if not r or not r.syncd:
         return (False, None)
 
-    rt = {'_default': 15,
+    rt = {'_default': 10,
           'REVIEWED': 60,
           'IN PROGRESS': 60,
           'MERGED': 720,
-          'ABANDONDED': 720,
+          'ABANDONDED': 900,
           'CLOSED': 720,
          }
 
