@@ -184,8 +184,7 @@ def lock_review(request):
     return dict(error=None)
 
 
-@view_config(route_name='show_review', renderer='templates/show_review.pt')
-@view_config(route_name='show_reviews', renderer='json')
+@view_config(route_name='show_review', renderer='templates/review.pt')
 def review(req):
     review_id = req.matchdict['review']
     review = DBSession.query(Review).filter_by(id=review_id).first()
@@ -193,7 +192,7 @@ def review(req):
     if not review:
         return HTTPNotFound('No such review')
 
-    return dict((col.name, str(getattr(review, col.name))) for col in sqlalchemy.orm.class_mapper(review.__class__).mapped_table.c)
+    return dict(review=review)
 
 
 @view_config(route_name='id_user', accept="application/json", renderer='json')

@@ -85,6 +85,18 @@ class Review(Base):
         self.locked = None
         self.locker = None
 
+    @pyramid.decorator.reify
+    def user_followup(self):
+        return self.state in ['REVIEWED', 'IN PROGRESS']
+
+    @pyramid.decorator.reify
+    def reviewer_followup(self):
+        return self.state in ['READY', 'NEW', 'PENDING', 'FOLLOW UP']
+
+    @pyramid.decorator.reify
+    def state_inflect(self):
+        return 'an' if self.state[0] in ['A', 'E', 'I', 'O', 'U'] else 'a'
+
 
 class ReviewVote(Base):
     __tablename__ = 'review_vote'
