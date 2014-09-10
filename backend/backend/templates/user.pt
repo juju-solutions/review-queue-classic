@@ -14,7 +14,7 @@
       </div>
     </div>
     <div class="eleven wide column">
-<div tal:condition="python:locked" class="review">
+    <div tal:condition="python:locked" class="review">
         <h1>Locked Reviews (${len(locked)})</h1>
         <table class="ui table segment sortable">
           <thead>
