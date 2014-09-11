@@ -98,6 +98,19 @@ class Review(Base):
         return 'an' if self.state[0] in ['A', 'E', 'I', 'O', 'U'] else 'a'
 
 
+class ReviewTest(Base):
+    __tablename__ = 'review_test'
+    id = Column(Integer, primary_key=True)
+    review_id = Column(Integer, ForeignKey('review.id'))
+    status = Column(Text)  # PENDING, PASS, FAIL?
+    url = Column(Text)
+
+    created = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+    finished = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+
+    review = relationship('Review', backref=backref('tests'))
+
+
 class ReviewVote(Base):
     __tablename__ = 'review_vote'
     id = Column(Integer, primary_key=True)
