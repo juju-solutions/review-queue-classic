@@ -50,7 +50,7 @@ class LaunchPad(object):
         self.charmers = lp.people['charmers']
 
     def ingest(self):
-        #self.get_bugs()
+        self.get_bugs()
         self.get_merges()
 
 
