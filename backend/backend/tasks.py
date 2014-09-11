@@ -53,7 +53,6 @@ class LaunchPad(object):
         self.get_bugs()
         self.get_merges()
 
-
     def get_merges(self):
         #proposals = charmers.getRequestedReviews()
         b = self.charmers.getBranches()
@@ -66,7 +65,6 @@ class LaunchPad(object):
                                                  'Superseded'])
             for merge in m:
                 self.create_from_merge(merge)
-
 
     def get_bugs(self):
         charm = self.lp.distributions['charms']
@@ -193,7 +191,6 @@ class LaunchPad(object):
 
         self.parse_messages(bug.messages, r)
 
-
     def parse_comments(self, comments, review):
         for m in comments:
             rv = (DBSession.query(ReviewVote)
@@ -212,7 +209,6 @@ class LaunchPad(object):
                         created=m.date_created.replace(tzinfo=None),
                        )
             create_vote(vote)
-
 
     def parse_messages(self, comments, review):
         first = True
