@@ -1,5 +1,6 @@
 import re
 import time
+import requests
 import datetime
 import transaction
 
@@ -22,6 +23,9 @@ from .models import (
     ReviewVote,
     Series,
 )
+
+CBT_URL = 'http://juju-ci.vapour.ws:8080/job/charm-bundle-test/buildWithParameters'
+
 
 def create_project(name):
     p = DBSession.query(Project).filter_by(name=name.lower()).first()
@@ -182,6 +186,26 @@ def login(login=False):
     return lp.me
 
 
+def request_build(build, cbt=None, token=None):
+    if not cbt:
+        cbt = CBT_URL
+
+    if not token:
+        raise Exception('No token provided')
+
+    # Build from request.route_url
+    cb = 'http://review.juju.solutions/review/%s/ctb_callback/%s' %(build['review'],
+                                                                    build['id'])
+    response = requests.post(cbt, data={
+        'url': build['url'],
+        'token': token,
+        'callback_url': cb,
+        'code_review': 'true',
+        'cause': 'Requested by review-queue ingestion.'
+    })
+    response.raise_for_status()
+
+    return response
 
 
 def wait_a_second(method):

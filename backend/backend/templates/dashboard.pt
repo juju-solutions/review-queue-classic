@@ -14,12 +14,13 @@
             <th class="descending">Age</th>
             <th class="eleven wide">Title</th>
             <th class="two">Submitter</th>
-            <th><i class="chat icon"></i></th>
-            <th><i class="checked checkbox icon"></i></th>
+            <th class="nosort"><i class="chat icon"></i></th>
+            <th class="nosort"><i class="ok sign icon"></i></th>
+            <th class="nosort"><i class="checked checkbox icon"></i></th>
           </tr>
         </thead>
         <tbody>
-          <tr tal:repeat="review incoming">
+          <tr tal:repeat="review incoming" data-review="${review.id}">
             <td data-sort-value="${review.age.split(' ')[0]}" data-content="${review.updated}">${review.age}</td>
             <td>
               <a href="${request.route_path('show_review', review=review.id)}">${review.title}</a>
@@ -29,6 +30,8 @@
             </td>
             <td><a href="/user/${review.owner.profiles[0].username}">${review.owner.name}</a></td>
             <td>${len(review.votes)}</td>
+            <td tal:condition="review.test"><i class="test sign ${review.test.color} icon"></i></td>
+            <td tal:condition="python: not review.test"><i class="test empty checkbox icon" data-content="No tests have been scheduled" data-variation="inverted"></i></td>
             <td>
               <i data-review-id="${review.id}" data-sort-value="1" class="locker unlock icon" tal:condition="python:not review.locked"></i>
               <i data-review-id="${review.id}" data-sort-value="0" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>
@@ -53,12 +56,13 @@
             <th class="descending">Age</th>
             <th>State</th>
             <th class="eleven wide">Name</th>
-            <th><i class="chat icon"></i></th>
-              <th><i class="checked checkbox icon"></i></th>
+            <th class="nosort"><i class="chat icon"></i></th>
+            <th class="nosort"><i class="ok sign icon"></i></th>
+            <th class="nosort"><i class="checked checkbox icon"></i></th>
           </tr>
         </thead>
         <tbody>
-          <tr class="review" tal:repeat="review reviews">
+          <tr class="review" tal:repeat="review reviews" data-review="${review.id}">
             <td data-sort-value="${review.age.split(' ')[0]}" data-content="${review.updated}">${review.age}</td>
             <td data-sort-value="${review.state.replace(' ', '')}" class="state ${review.state.replace(' ', '').lower()}" data-variation="inverted">${review.state}</td>
             <td>
@@ -70,6 +74,8 @@
             <td>
               ${len(review.votes)}
             </td>
+            <td tal:condition="review.test"><i class="test sign ${review.test.color} icon" data-content="${review.test.status}" data-variation="inverted"></i></td>
+            <td tal:condition="python: not review.test"><i class="test empty checkbox icon" data-content="No tests have been scheduled" data-variation="inverted"></i></td>
             <td>
               <i data-review-id="${review.id}" data-sort-value="1" class="locker unlock icon" tal:condition="python:not review.locked"></i>
               <i data-review-id="${review.id}" data-sort-value="0" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>

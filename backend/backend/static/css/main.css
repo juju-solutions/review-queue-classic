@@ -19,7 +19,8 @@ a:hover {
 
 .state,
 .locker,
-.already.unlock {
+.already.unlock,
+.test.icon {
   cursor: pointer;
 }
 
@@ -250,4 +251,20 @@ h1 .icon {
 
 a i.icon {
   text-decoration: none;
+}
+
+.ui.table th {
+  padding: .4em .3em;
+}
+
+.ui.table th.nosort {
+  padding-right: 0;
+}
+
+.ui.table th.nosort.sorted {
+  padding-right: 0;
+}
+
+.ui.sortable.table thead th.nosort:after {
+  margin: 0;
 }

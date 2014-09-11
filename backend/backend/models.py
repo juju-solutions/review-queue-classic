@@ -61,6 +61,21 @@ class Review(Base):
                           backref=backref('locks'))
 
     @pyramid.decorator.reify
+    def test(self):
+        if self.tests:
+            t = self.tests[0]
+            if t.status == 'FAIL':
+                t.color = 'red'
+            elif t.status == 'PASS':
+                t.color = 'green'
+            else:
+                t.color = ''
+
+            return t
+        else:
+            return None
+
+    @pyramid.decorator.reify
     def positive_votes(self):
         return [vote for vote in self.votes if vote.vote == 'POSITIVE']
 
@@ -108,7 +123,8 @@ class ReviewTest(Base):
     created = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     finished = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
-    review = relationship('Review', backref=backref('tests'))
+    review = relationship('Review', backref=backref('tests'),
+                          order_by="ReviewTest.created")
 
 
 class ReviewVote(Base):

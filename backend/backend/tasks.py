@@ -38,6 +38,7 @@ engine = engine_from_config(settings, 'sqlalchemy.')
 DBSession.configure(bind=engine)
 charmers = get_lp().people['charmers']
 
+
 def import_from_lp():
     LaunchPad(get_lp(True)).ingest()
 

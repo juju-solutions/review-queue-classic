@@ -24,6 +24,7 @@ from .models import (
     Profile,
     User,
     ReviewVote,
+    ReviewTest,
 )
 
 from .helpers import (
@@ -31,6 +32,7 @@ from .helpers import (
     ReviewSerializer,
     ReviewedSerializer,
     get_lp,
+    request_build,
 )
 
 from tasks import create_user
@@ -183,6 +185,42 @@ def lock_review(request):
     return dict(error=None)
 
 
+@view_config(route_name='test_review', renderer='json')
+def test_review(request):
+    if 'User' not in request.session:
+        return dict(error='Not logged in')
+
+    user = request.session['User']
+    if not user.is_charmer:
+        return dict(error='Only charmers can initiate reviews')
+
+    review_id = request.matchdict['review']
+    review = DBSession.query(Review).get(review_id)
+
+    if not review:
+        return dict(error='Unable to find requested review %s' % review_id)
+
+    rt = ReviewTest(status='PENDING', review=review, finished=None)
+    DBSession.add(rt)
+    DBSession.flush()
+
+    if review.type == 'UPDATE':
+        br = dict(url=review.url, review=review_id, id=rt.id)
+    else:
+        lp = get_lp()
+        bug = lp.load(review.api_url).bug
+        br = dict(url=bug.linked_branches[0].branch.bzr_identity,
+                  review=review_id, id=rt.id)
+
+    try:
+        request_build(br, token=request.registry.settings['cbt.token'])
+    except:
+        DBSession.delete(rt)
+        return dict(error='Unable to initiate build')
+
+    return dict(error=None)
+
+
 @view_config(route_name='show_review', renderer='templates/review.pt')
 def review(req):
     review_id = req.matchdict['review']
@@ -230,3 +268,46 @@ def user(request):
              ).all()
 
     return dict(user=user, reviews=reviews, submitted=submitted, locked=locked)
+
+
+@view_config(route_name='cbt_review_callback', renderer='json')
+def cbt_processing(request):
+    review_id = request.matchdict.get('review')
+    id = request.matchdict.get('id')
+    if review_id and id:
+        rt = DBSession.query(ReviewTest).get(id)
+
+    if not rt:
+        return HTTPNotFound('No review and test found')
+
+    rt.status = request.params.get('status')
+    rt.url = request.params.get('result_url')
+
+    lp = get_lp(True)
+
+    try:
+        lp.me
+    except errors.Unauthorized as e:
+        return
+
+    item = lp.load(rt.review.api_url)
+
+    if rt.status == 'FAIL':
+        vote = 'Needs Fixing'
+        content = ('This items has failed automated testing! '
+                   'Results available here %s' % rt.url)
+    else:
+        vote = rt.status
+        content = ('The results (%s) are in and available here: %s' %
+                   (rt.status, rt.url))
+
+    subject='Review Queue Test Results'
+
+    if hasattr(item, 'createComment'):
+        # It's a merge request
+        item.createComment(content=content, vote=vote, review_type='CBT',
+                           subject=subject)
+    elif hasattr(item, 'newMessage'):
+        # It's a bug
+        item.newMessage(content=content, subject=subject)
+
