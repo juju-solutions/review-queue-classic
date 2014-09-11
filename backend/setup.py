@@ -49,5 +49,7 @@ setup(name='backend',
       main = backend:main
       [console_scripts]
       initialize_backend_db = backend.scripts.initializedb:main
+      initialize_lp_creds = backend.helpers:login
+      ingest_the_world = backend.tasks:import_from_lp
       """,
       )

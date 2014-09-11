@@ -1,4 +1,3 @@
-import re
 import time
 import transaction
 import datetime
@@ -10,12 +9,19 @@ from .models import (
     Profile,
     User,
     ReviewVote,
-    Series
+    Series,
 )
 
 from .helpers import (
     get_lp,
     wait_a_second,
+    create_project,
+    bug_state,
+    map_lp_state,
+    create_user,
+    create_series,
+    determine_sentiment,
+    create_vote,
 )
 
 from sqlalchemy import engine_from_config
@@ -32,341 +38,213 @@ engine = engine_from_config(settings, 'sqlalchemy.')
 DBSession.configure(bind=engine)
 charmers = get_lp().people['charmers']
 
-
 def import_from_lp():
-    get_bugs()
-    get_merges()
+    LaunchPad(get_lp(True)).ingest()
+
+class LaunchPad(object):
+    def __init__(self, lp):
+        if not lp:
+            lp = get_lp()
+
+        self.lp = lp
+        self.charmers = lp.people['charmers']
+
+    def ingest(self):
+        #self.get_bugs()
+        self.get_merges()
 
 
-def get_merges():
-    #proposals = charmers.getRequestedReviews()
-    b = charmers.getBranches()
+    def get_merges(self):
+        #proposals = charmers.getRequestedReviews()
+        b = self.charmers.getBranches()
 
-    for branch in b:
-        m = branch.getMergeProposals(status=['Work in progress',
-                                             'Needs review', 'Approved',
-                                             'Rejected', 'Merged',
-                                             'Code failed to merge', 'Queued',
-                                             'Superseded'])
-        for merge in m:
-            create_review_from_merge(merge)
-
-
-def get_bugs():
-    lp = get_lp()
-    charm = lp.distributions['charms']
-    branch_filter = "Show only Bugs with linked Branches"
-    bugs = charm.searchTasks(linked_branches=branch_filter,
-                             status=['New', 'Incomplete', 'Opinion', 'Invalid',
-                                     "Won't Fix", 'Confirmed', 'Triaged',
-                                     'In Progress', 'Fix Committed',
-                                     'Fix Released',
-                                     'Incomplete (with response)',
-                                     'Incomplete (without response)'])
-    for bug in bugs:
-        if '+source' in bug.web_link:
-            continue
-        create_review_from_bug(bug,
-                               lp.bugs[int(''.join(bug.web_link.split('/')[-1:]))])
+        for branch in b:
+            m = branch.getMergeProposals(status=['Work in progress',
+                                                 'Needs review', 'Approved',
+                                                 'Rejected', 'Merged',
+                                                 'Code failed to merge', 'Queued',
+                                                 'Superseded'])
+            for merge in m:
+                self.create_from_merge(merge)
 
 
-def bug_state(bug_task):
-    if not bug_task.date_left_new and bug_task.status == 'New':
-        return 'NEW'
+    def get_bugs(self):
+        charm = self.lp.distributions['charms']
+        branch_filter = "Show only Bugs with linked Branches"
+        tasks = charm.searchTasks(linked_branches=branch_filter,
+                                  status=['New', 'Incomplete', 'Opinion',
+                                          "Won't Fix", 'Confirmed', 'Triaged',
+                                          'In Progress', 'Fix Committed',
+                                          'Fix Released', 'Invalid',
+                                          'Incomplete (with response)',
+                                          'Incomplete (without response)'])
+        for task in tasks:
+            if '+source' in task.web_link:
+                continue
+            self.create_from_bug(task, task.bug)
 
-    return map_lp_state(bug_task.status)
+    def skip_refresh(self, record):
+        if not record or not record.syncd:
+            return (False, None)
 
-
-def map_lp_state(state):
-    # 'NEW', 'PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'READY', 'ABANDONDED',
-    # 'IN PROGRESS', 'FOLLOW UP'
-    states = {'new': 'PENDING',
-              'incomplete': 'REVIEWED',
-              'incomplete (without response)': 'REVIEWED',
-              'incomplete (with response)': 'FOLLOW UP',
-              'opinion': 'CLOSED',
-              'invalid': 'CLOSED',
-              "won't fix": 'ABANDONDED',
-              "expired": 'ABANDONDED',
-              'confirmed': 'PENDING',
-              'triaged': 'PENDING',
-              'in progress': 'IN PROGRESS',
-              'fix committed': 'READY',
-              'fix released': 'CLOSED',
-              'needs review': 'PENDING',
-              'work in progress': 'IN PROGRESS',
-              'approved': 'READY',
-              'rejected': 'ABANDONDED',
-              'merged': 'MERGED',
-              'superseded': 'ABANDONDED',
-              'queued': 'PENDING',
-              'code failed to merge': 'FOLLOW UP',
+        rt = {'_default': 10,
+              'REVIEWED': 60,
+              'IN PROGRESS': 60,
+              'MERGED': 720,
+              'ABANDONDED': 900,
+              'CLOSED': 720,
              }
 
-    return states[state.lower()]
+        timedelta = datetime.datetime.utcnow() - record.syncd
+        diff = divmod(timedelta.days * 86400 + timedelta.seconds, 60)
+        timelimit = rt['_default'] if record.state not in rt else rt[record.state]
+        return (diff[0] < timelimit, timelimit - diff[0])
 
-
-def create_project(name):
-    try:
-        p = DBSession.query(Project).filter_by(name=name.lower()).one()
-    except orm.exc.NoResultFound:
-        pass
-    else:
-        return p
-
-    with transaction.manager:
-        p = Project(name=name.lower())
-        DBSession.add(p)
-
-    return create_project(name)
-
-
-def skip_refresh(r):
-    if not r or not r.syncd:
-        return (False, None)
-
-    rt = {'_default': 10,
-          'REVIEWED': 60,
-          'IN PROGRESS': 60,
-          'MERGED': 720,
-          'ABANDONDED': 900,
-          'CLOSED': 720,
-         }
-
-    timedelta = datetime.datetime.utcnow() - r.syncd
-    diff = divmod(timedelta.days * 86400 + timedelta.seconds, 60)
-    timelimit = rt['_default'] if r.state not in rt else rt[r.state]
-    return (diff[0] < timelimit, timelimit - diff[0])
-
-
-@wait_a_second
-def create_review_from_merge(task):
-    active = True
-    with transaction.manager:
-        r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
-        skip_data = skip_refresh(r)
-        if skip_data[0]:
-            print("SKIP: %s (%s mins left)" % (task, skip_data[1]))
-            return
-
-        if not r:
-            r = Review(type='UPDATE', api_url=task.self_link,
-                       created=task.date_created.replace(tzinfo=None))
-
-        print(task)
-        title = "%s into %s" % (task.source_branch.display_name,
-                                task.target_branch.display_name)
-        r.url = task.web_link
-        r.title = title=title
-        prevstate = r.state
-        r.state = map_lp_state(task.queue_status)
-        r.owner = create_user(task.registrant)
-        r.source = DBSession.query(Source).filter_by(slug='lp').one()
-        r.syncd = datetime.datetime.utcnow()
-
-        if task.target_branch.sourcepackage:
-            series_data = task.target_branch.sourcepackage.distroseries
-            r.series = create_series(series_data)
-            active = r.series.active
-
-        if r.series and not r.series.active:
-            r.state = 'ABANDONDED'
-
-        comments = task.all_comments
-
-        prev = r.updated
-        if len(comments) > 0:
-            r.updated = comments[len(comments)-1].date_created.replace(tzinfo=None)
-        else:
-            r.updated = task.date_created.replace(tzinfo=None)
-
-        if r.updated != prev or r.state != prevstate:
-            r.unlock()
-
-        if r.state in ['REVIEWED', 'CLOSED'] and len(comments) > 0:
-            if comments[len(comments)-1].author == task.registrant:
-                r.state = 'FOLLOW UP'
-
-        DBSession.add(r)
-
-    if active:
-        parse_comments(comments, r)
-    else:
-        print("Old ass shit, skipping")
-
-
-@wait_a_second
-def create_review_from_bug(task, bug):
-    with transaction.manager:
-        r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
-
-        skip_data = skip_refresh(r)
-        if skip_data[0]:
-            print("SKIP: %s (%s mins left)" % (task, skip_data[1]))
-            return
-
-        if not r:
-            r = Review(type='NEW', api_url=task.self_link,
-                       created=task.date_created.replace(tzinfo=None))
-
-        print(bug)
-        r.title = bug.title
-        r.url = task.web_link
-        prevstate = r.state
-        r.state = bug_state(task)
-        prev = r.updated
-        r.updated = bug.date_last_message.replace(tzinfo=None) if bug.date_last_message > bug.date_last_updated else bug.date_last_updated.replace(tzinfo=None)
-
-        if r.updated != prev or r.state != prevstate:
-            r.unlock()
-        r.owner = create_user(task.owner)
-        r.source = DBSession.query(Source).filter_by(slug='lp').one()
-        r.syncd = datetime.datetime.utcnow()
-
-        if r.state in ['REVIEWED', 'CLOSED']:
-            if bug.messages[len(bug.messages)-1].owner == task.assignee:
-                r.state = 'FOLLOW UP'
-
-        DBSession.add(r)
-
-    parse_messages(bug.messages, r)
-
-
-def parse_comments(comments, review):
-    for m in comments:
-        try:
-            DBSession.query(ReviewVote).filter_by(comment_id=m.self_link).one()
-        except orm.exc.NoResultFound:
-            pass
-        else:
-            print(m.self_link)
-            continue
-
+    @wait_a_second
+    def create_from_merge(self, task):
+        active = True
         with transaction.manager:
-            s = determine_sentiment(m.vote)
-            u = create_user(m.author)
-            v = ReviewVote(vote=s, comment_id=m.self_link, created=m.date_created.replace(tzinfo=None))
-            print("Inserting %s (%s) %s" % (m.self_link, s, u.name))
-            v.owner = u
-            v.review = review
-            DBSession.add(v)
+            r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+            skip_data = self.skip_refresh(r)
+            if skip_data[0]:
+                print("SKIP: %s (%s mins left)" % (task, skip_data[1]))
+                return
 
+            if not r:
+                r = Review(type='UPDATE', api_url=task.self_link,
+                           created=task.date_created.replace(tzinfo=None))
 
-def parse_messages(comments, review):
-    first = True  # Hate this
-    for m in comments:
-        if first:
-            first = False
-            continue
+            print(task)
+            title = task.source_branch.display_name
+            r.url = task.web_link
+            r.title = title=title
+            prevstate = r.state
+            r.state = map_lp_state(task.queue_status)
+            r.owner = create_user(task.registrant)
+            r.source = DBSession.query(Source).filter_by(slug='lp').one()
+            r.syncd = datetime.datetime.utcnow()
 
-        try:
-            DBSession.query(ReviewVote).filter_by(comment_id=m.self_link).one()
-        except orm.exc.NoResultFound:
-            pass
+            if task.target_branch.sourcepackage:
+                series_data = task.target_branch.sourcepackage.distroseries
+                r.series = create_series(series_data)
+                active = r.series.active
+
+            if r.series and not r.series.active:
+                r.state = 'ABANDONDED'
+
+            comments = task.all_comments
+
+            prev = r.updated
+            if len(comments) > 0:
+                r.updated = comments[len(comments)-1].date_created.replace(tzinfo=None)
+            else:
+                r.updated = task.date_created.replace(tzinfo=None)
+
+            if r.updated != prev or r.state != prevstate:
+                r.unlock()
+
+            if r.state in ['REVIEWED', 'CLOSED'] and len(comments) > 0:
+                if comments[len(comments)-1].author == task.registrant:
+                    r.state = 'FOLLOW UP'
+
+            DBSession.add(r)
+
+        if active:
+            self.parse_comments(comments, r)
         else:
-            print(m.self_link)
-            continue
+            print("Old ass shit, skipping")
 
+    @wait_a_second
+    def create_from_bug(self, task, bug):
+        prev = None
         with transaction.manager:
-            s = determine_sentiment(m.content)
-            u = create_user(m.owner)
-            v = ReviewVote(vote=s, comment_id=m.self_link)
-            print("Inserting %s (%s) %s" % (m.self_link, s, u.name))
-            v.owner = u
-            v.review = review
-            DBSession.add(v)
+            r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+
+            skip_data = self.skip_refresh(r)
+            if skip_data[0]:
+                print("SKIP: %s (%s mins left)" % (task, skip_data[1]))
+                return
+
+            if not r:
+                r = Review(type='NEW', api_url=task.self_link,
+                           created=task.date_created.replace(tzinfo=None))
+            else:
+                prev = r
+
+            print(task)
+            r.title = bug.title
+            r.url = task.web_link
+            r.state = bug_state(task)
+            r.updated = bug.date_last_message.replace(tzinfo=None) if bug.date_last_message > bug.date_last_updated else bug.date_last_updated.replace(tzinfo=None)
+
+            if prev:
+                if r.updated != prev.updated or r.state != prev.state:
+                    r.unlock()
+
+            r.owner = create_user(task.owner)
+            r.source = DBSession.query(Source).filter_by(slug='lp').one()
+            r.syncd = datetime.datetime.utcnow()
+
+            if r.state in ['REVIEWED', 'CLOSED']:
+                if bug.messages[len(bug.messages)-1].owner == task.assignee:
+                    r.state = 'FOLLOW UP'
+
+            DBSession.add(r)
+
+        self.parse_messages(bug.messages, r)
 
 
-def create_user(profile):
-    p = DBSession.query(Profile).filter_by(url=profile.web_link).first()
+    def parse_comments(self, comments, review):
+        for m in comments:
+            rv = (DBSession.query(ReviewVote)
+                           .filter_by(comment_id=m.self_link)
+                           .first()
+                 )
 
-    if p:
-        return p.user
+            if rv and rv.created:
+                print(m.self_link)
+                continue
 
-    with transaction.manager:
-        # It's an LP profile
-        p = Profile(name=profile.display_name, username=profile.name,
-                    url=profile.web_link)
-        p.source = DBSession.query(Source).filter_by(slug='lp').first()
-
-        r = User(name=profile.display_name,
-                 is_charmer=profile in charmers.members)
-        p.user = r
-        DBSession.add(r)
-        DBSession.add(p)
-
-    return DBSession.query(Profile).filter_by(url=profile.web_link).first().user
-
-
-def create_series(series):
-    series_slug = series.name.replace(' ', '_')
-    s = DBSession.query(Series).filter_by(slug=series_slug).first()
-
-    if s:
-        return s
-
-    with transaction.manager:
-        s = Series(slug=series_slug, name=series.name, active=series.active)
-        DBSession.add(s)
-
-    return DBSession.query(Series).filter_by(slug=series_slug).one()
+            vote = dict(vote=determine_sentiment(m.vote),
+                        owner=create_user(m.author),
+                        review=review,
+                        comment_id=m.self_link,
+                        created=m.date_created.replace(tzinfo=None),
+                       )
+            create_vote(vote)
 
 
-def determine_sentiment(text):
-    if not text:
-        return 'COMMENT'
+    def parse_messages(self, comments, review):
+        first = True
+        for m in comments:
+            if first:
+                first = False # WTF
+                continue
+            rv = (DBSession.query(ReviewVote)
+                           .filter_by(comment_id=m.self_link)
+                           .first()
+                 )
 
-    positive = ['lgtm', '\+1', 'approve']
-    negative = ['nlgtm', '\-1 ', 'needs work', 'needs fixing',
-                'needs information', 'disapprove', 'resubmit', 'dnlgtm']
-    sentiment = 0
-    for p in positive:
-        if re.findall(p, text, re.I):
-            sentiment += 1
+            if rv and rv.created:
+                print(m.self_link)
+                continue
 
-    for n in negative:
-        if re.findall(n, text, re.I):
-            sentiment -= 1
+            vote = dict(vote=determine_sentiment(m.content),
+                        owner=create_user(m.owner),
+                        review=review,
+                        comment_id=m.self_link,
+                        created=m.date_created.replace(tzinfo=None),
+                       )
 
-    if sentiment > 0:
-        return 'POSITIVE'
-    elif sentiment < 0:
-        return 'NEGATIVE'
-    else:
-        return 'COMMENT'
+            create_vote(vote)
 
+    def refresh(self, record):
+        if not record.api_url:
+            return False
 
-class LaunchPadReview(object):
-    pass
-
-
-class GithubReview(object):
-    pass
-
-
-def refresh_all():
-    r = DBSession.query(Review).all()
-    lp = get_lp()
-    for review in r:
-        refresh(review)
-
-
-def refresh_bug(record):
-    lp = get_lp()
-    item = lp.load(record.api_url)
-
-    record.state = bug_state(item)
-    record.title = item.title
-
-
-
-def refresh(record):
-    if not record.api_url:
-        return False
-
-    if record.type == 'NEW':
-        refresh_bug(record)
-    elif record.type == 'UPDATE':
-        refresh_merge(record)
-    else:
-        raise Exception('Turn down for what')
+        if record.type == 'NEW':
+            self.create_from_bug(self.lp.load(record.api_url))
+        elif record.type == 'UPDATE':
+            self.create_from_merge(self.lp.load(record.api_url))
+        else:
+            raise Exception('Turn down for what')
