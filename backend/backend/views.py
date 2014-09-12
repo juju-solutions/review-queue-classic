@@ -31,6 +31,7 @@ from .helpers import (
     UserSerializer,
     ReviewSerializer,
     ReviewedSerializer,
+    ReviewedTestSerializer,
     get_lp,
     request_build,
 )
@@ -311,3 +312,4 @@ def cbt_processing(request):
         # It's a bug
         item.newMessage(content=content, subject=subject)
 
+    return ReviewTestSerializer(rt).data

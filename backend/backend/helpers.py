@@ -262,6 +262,16 @@ class ReviewSerializer(Serializer):
         fields = ('id', 'title', 'type', 'url', 'state', 'owner', 'created', 'updated')
 
 
+class ReviewTestSerializer(Serializer):
+    review = fields.Method('review_map')
+
+    def review_map(self, r):
+        return ReviewSerializer(r.review, exclude=('tests')).data
+
+    class Meta:
+        fields = ('id', 'status', 'created', 'finished', 'url', 'review')
+
+
 class ReviewedSerializer(Serializer):
     id = fields.Method('id_map')
     title = fields.Method('title_map')
