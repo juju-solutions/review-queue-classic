@@ -298,7 +298,7 @@ def cbt_processing(request):
         content = ('This items has failed automated testing! '
                    'Results available here %s' % rt.url)
     else:
-        vote = rt.status
+        vote = 'Approve'
         content = ('The results (%s) are in and available here: %s' %
                    (rt.status, rt.url))
 
