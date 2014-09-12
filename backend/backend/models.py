@@ -63,7 +63,7 @@ class Review(Base):
     @pyramid.decorator.reify
     def test(self):
         if self.tests:
-            t = self.tests[0]
+            t = self.tests[-1]
             if t.status == 'FAIL':
                 t.color = 'red'
             elif t.status == 'PASS':
@@ -124,7 +124,7 @@ class ReviewTest(Base):
     finished = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
     review = relationship('Review', backref=backref('tests'),
-                          order_by="ReviewTest.created")
+                          order_by="ReviewTest.id")
 
 
 class ReviewVote(Base):
