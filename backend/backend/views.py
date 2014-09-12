@@ -31,7 +31,7 @@ from .helpers import (
     UserSerializer,
     ReviewSerializer,
     ReviewedSerializer,
-    ReviewedTestSerializer,
+    ReviewTestSerializer,
     get_lp,
     request_build,
 )
