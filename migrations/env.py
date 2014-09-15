@@ -7,7 +7,7 @@ from ConfigParser import ConfigParser
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 
-from backend.models import Base
+from reviewq.models import Base
 
 
 def load_ini(ini_file):
