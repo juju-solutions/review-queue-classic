@@ -166,7 +166,7 @@ def setup_user(event):
 @subscriber(BeforeRender)
 def add_global(event):
     import pkg_resources
-    event['version'] = pkg_resources.get_distribution("backend").version
+    event['version'] = pkg_resources.get_distribution("reviewq").version
 
 
 def get_lp(login=False):

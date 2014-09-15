@@ -36,8 +36,8 @@ clean:
 	find . -name '*.bak' -delete
 	rm -f .coverage
 
-develop: lib/python*/site-packages/backend.egg-link
-lib/python*/site-packages/backend.egg-link:
+develop: lib/python*/site-packages/reviewq.egg-link
+lib/python*/site-packages/reviewq.egg-link:
 	$(PY) setup.py develop
 
 .PHONY: sysdeps
@@ -63,7 +63,7 @@ functional_test: $(NOSE)
 .PHONY: coverage
 coverage: $(NOSE)
 	@echo Testing with coverage...
-	@$(NOSE) --nologcapture --with-coverage --cover-package=backend
+	@$(NOSE) --nologcapture --with-coverage --cover-package=reviewq
 
 .PHONY: lint
 lint:

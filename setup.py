@@ -25,9 +25,9 @@ requires = [
     'requests',
     ]
 
-setup(name='backend',
+setup(name='reviewq',
       version='1.4.0',
-      description='backend',
+      description='Juju Ecosystem Review Queue',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -42,14 +42,14 @@ setup(name='backend',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      test_suite='backend',
+      test_suite='reviewq',
       install_requires=requires,
       entry_points="""\
       [paste.app_factory]
-      main = backend:main
+      main = reviewq:main
       [console_scripts]
-      initialize_backend_db = backend.scripts.initializedb:main
-      initialize_lp_creds = backend.helpers:login
-      ingest_the_world = backend.tasks:import_from_lp
+      initialize_backend_db = reviewq.scripts.initializedb:main
+      initialize_lp_creds = reviewq.helpers:login
+      ingest_the_world = reviewq.tasks:import_from_lp
       """,
       )

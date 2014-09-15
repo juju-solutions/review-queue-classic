@@ -84,8 +84,13 @@ class Review(Base):
         return [vote for vote in self.votes if vote.vote == 'NEGATIVE']
 
     @pyramid.decorator.reify
-    def age(self):
-        d = datetime.datetime.utcnow() - self.updated
+    def age(self, use_updated=True):
+        if use_updated:
+            t = self.updated
+        else:
+            t = self.created
+
+        d = datetime.datetime.utcnow() - t
         hours = d.seconds * 60 * 60
         if hours > 48:
             return '%s d' % d.days
@@ -111,6 +116,20 @@ class Review(Base):
     @pyramid.decorator.reify
     def state_inflect(self):
         return 'an' if self.state[0] in ['A', 'E', 'I', 'O', 'U'] else 'a'
+
+
+class ReviewHistory(Base):
+    __tablename__ = 'review_history'
+    id = Column(Integer, primary_key=True)
+    review_id = Column(Integer, ForeignKey('review.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+
+    what = Column(Text)
+    prev = Column(Text)
+    new = Column(Text)
+
+    user = relationship('User', backref=backref('actions'))
+    review = relationship('Review', backref=backref('history'))
 
 
 class ReviewTest(Base):
