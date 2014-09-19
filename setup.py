@@ -23,6 +23,7 @@ requires = [
     'python-dateutil',
     'velruse',
     'requests',
+    'celery[redis]',
     ]
 
 setup(name='reviewq',

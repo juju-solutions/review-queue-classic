@@ -1,13 +1,9 @@
-import re
-import base64
 import requests
-import sqlalchemy
 import logging
 
 from dateutil import parser
 
 from datetime import (
-    date,
     datetime,
     timedelta,
 )
@@ -35,10 +31,11 @@ from .helpers import (
     ReviewTestSerializer,
     get_lp,
     request_build,
+    create_user,
 )
 
-from tasks import create_user
-from ubuntusso import UBUNTU_SSO
+
+from tasks import parse_tests
 
 
 log = logging.getLogger(__name__)
@@ -282,49 +279,6 @@ def cbt_processing(request):
     if not rt:
         return HTTPNotFound('No review and test found')
 
-    rt.status = request.params.get('status')
-    rt.url = request.params.get('result_url')
-
-    rt_json = '%s/json' % rt.url
-    response = requests.get(rt_json)
-    try:
-        response.raise_for_status()
-        rt_data = rt_json.json()
-    except:
-        rt.status = 'UNKNOWN'
-        rt_data = None
-
-
-    if rt_data:
-        rt.status = rt_data['result'].upper()
-
-    lp = get_lp(True)
-
-    try:
-        lp.me
-    except errors.Unauthorized as e:
-        return
-
-    item = lp.load(rt.review.api_url)
-    content = None
-    if rt.status == 'FAIL':
-        vote = 'Needs Fixing'
-        content = ('This items has failed automated testing! '
-                   'Results available here %s' % rt.url)
-    elif rt.status == 'PASS':
-        vote = 'Approve'
-        content = ('The results (%s) are in and available here: %s' %
-                   (rt.status, rt.url))
-
-    if content:
-        subject='Review Queue Test Results'
-
-        if hasattr(item, 'createComment'):
-            # It's a merge request
-            item.createComment(content=content, vote=vote, review_type='CBT',
-                               subject=subject)
-        elif hasattr(item, 'newMessage'):
-            # It's a bug
-            item.newMessage(content=content, subject=subject)
+    parse_tests.delay(rt, request.params.get('result_url'))
 
     return ReviewTestSerializer(rt).data
