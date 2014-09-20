@@ -1,6 +1,8 @@
 import os
 import ConfigParser
 
+from datetime import timedelta
+
 from celery import Celery
 
 
@@ -18,6 +20,13 @@ celery = Celery('reviewq.celery',
 celery.conf.update(
     CELERY_BACKEND_TRANSPORT_OPTIONS=config.get('celery', 'backend_transport_options'),
     CELERY_ACCEPT_CONTENT=['pickle'],
+    CELERY_TIMEZONE='UTC',
+    CELERYBEAT_SCHEDULE={
+        'refresh_active': {
+            'task': 'reviewq.tasks.refresh_active',
+            'schedule': timedelta(seconds=120),
+        },
+    },
 )
 
 if __name__ == '__main__':
