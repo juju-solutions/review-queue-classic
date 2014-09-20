@@ -76,51 +76,49 @@ def map_lp_state(state):
 
 
 def create_vote(vote):
-    with transaction.manager:
-        rv = (DBSession.query(ReviewVote)
-                       .filter_by(comment_id=vote['comment_id'])
-                       .first()
-             )
+    rv = (DBSession.query(ReviewVote)
+                   .filter_by(comment_id=vote['comment_id'])
+                   .first()
+         )
 
-        if not rv:
-            rv = ReviewVote()
-            print("Creating %s" % vote['comment_id'])
-        else:
-            print("Updating %s" % vote['comment_id'])
+    if not rv:
+        rv = ReviewVote()
+        print("Creating %s" % vote['comment_id'])
+    else:
+        print("Updating %s" % vote['comment_id'])
 
-        rv.vote = vote['vote']
-        rv.owner = vote['owner']
-        rv.comment_id = vote['comment_id']
-        rv.review = vote['review']
-        rv.created = vote['created']
+    rv.vote = vote['vote']
+    rv.owner = vote['owner']
+    rv.comment_id = vote['comment_id']
+    rv.review = vote['review']
+    rv.created = vote['created']
 
-        return rv
+    return rv
 
 
 def create_user(profile):
-    with transaction.manager:
-        p = DBSession.query(Profile).filter_by(url=profile.web_link).first()
-        print('create_user', DBSession.object_session(p.user))
+    p = DBSession.query(Profile).filter_by(url=profile.web_link).first()
+    print('create_user', DBSession.object_session(p.user))
 
-        if not p:
-            p = Profile(url=profile.web_link)
-            r = User()
-        else:
-            return p.user
+    if not p:
+        p = Profile(url=profile.web_link)
+        r = User()
+    else:
+        r = p.user
 
-        p.name = profile.display_name
-        p.username = profile.name
-        p.source = DBSession.query(Source).filter_by(slug='lp').first()
+    p.name = profile.display_name
+    p.username = profile.name
+    p.source = DBSession.query(Source).filter_by(slug='lp').first()
 
-        r.name = profile.display_name
-        r.is_charmer = profile in get_lp().people['charmers'].members
+    r.name = profile.display_name
+    r.is_charmer = profile in get_lp().people['charmers'].members
 
-        p.user = r
+    p.user = r
 
-        DBSession.add(r)
-        DBSession.add(p)
+    DBSession.add(r)
+    DBSession.add(p)
 
-    return DBSession.query(Profile).filter_by(url=profile.web_link).first().user
+    return r
 
 
 def create_series(series):
@@ -130,11 +128,10 @@ def create_series(series):
     if s:
         return s
 
-    with transaction.manager:
-        s = Series(slug=series_slug, name=series.name, active=series.active)
-        DBSession.add(s)
+    s = Series(slug=series_slug, name=series.name, active=series.active)
+    DBSession.add(s)
 
-    return DBSession.query(Series).filter_by(slug=series_slug).one()
+    return s
 
 
 def determine_sentiment(text):
