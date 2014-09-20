@@ -98,20 +98,24 @@ def create_vote(vote):
 
 
 def create_user(profile):
-    p = DBSession.query(Profile).filter_by(url=profile.web_link).first()
-
-    if p:
-        return p.user
-
     with transaction.manager:
-        # It's an LP profile
-        p = Profile(name=profile.display_name, username=profile.name,
-                    url=profile.web_link)
+        p = DBSession.query(Profile).filter_by(url=profile.web_link).first()
+
+        if not p:
+            p = Profile(url=profile.web_link)
+            r = User()
+        else:
+            r = p.user
+
+        p.name = profile.display_name
+        p.username = profile.name
         p.source = DBSession.query(Source).filter_by(slug='lp').first()
 
-        r = User(name=profile.display_name,
-                 is_charmer=profile in get_lp().people['charmers'].members)
+        r.name=profile.display_name
+        r.is_charmer=profile in get_lp().people['charmers'].members
+
         p.user = r
+
         DBSession.add(r)
         DBSession.add(p)
 
