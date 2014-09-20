@@ -29,7 +29,6 @@ class LaunchPad(SourcePlugin):
         self.get_merges()
 
     def get_merges(self):
-        #proposals = charmers.getRequestedReviews()
         b = self.person.getBranches()
 
         for branch in b:

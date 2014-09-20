@@ -1,7 +1,6 @@
 import re
 import time
 import requests
-import datetime
 import transaction
 
 from launchpadlib.launchpad import Launchpad

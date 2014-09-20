@@ -14,7 +14,6 @@ from .helpers import (
 from .models import (
     DBSession,
     Base,
-    User,
 )
 
 
