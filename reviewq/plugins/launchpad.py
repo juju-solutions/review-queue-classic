@@ -142,20 +142,14 @@ class LaunchPad(SourcePlugin):
         prev = None
         with transaction.manager:
             r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
-            print('before merge', DBSession.object_session(r))
             if not r:
                 r = Review(type='NEW', api_url=task.self_link,
                            created=task.date_created.replace(tzinfo=None))
-                DBSession.add(r)
             else:
                 prev = r
 
             self.log(task)
             r.title = bug.title
-            r = DBSession.merge(r)
-            print('after merge', DBSession.object_session(r))
-            print('after merge, owner', DBSession.object_session(r.owner))
-            print(r.owner)
             r.owner = create_user(task.owner)
             r.url = task.web_link
             r.state = bug_state(task)
