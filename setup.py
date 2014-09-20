@@ -27,7 +27,7 @@ requires = [
     ]
 
 setup(name='reviewq',
-      version='1.4.0',
+      version='1.5.0',
       description='Juju Ecosystem Review Queue',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
