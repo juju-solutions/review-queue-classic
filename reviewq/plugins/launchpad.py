@@ -21,10 +21,8 @@ from ..plugin import SourcePlugin
 
 
 class LaunchPad(SourcePlugin):
-    def __init__(self, lp, db):
-        self.person = self.lp.people['charmers']
-
-    def ingest(self):
+    def ingest(self, person):
+        self.person = self.lp.people[person]
         self.get_bugs()
         self.get_merges()
 
@@ -82,14 +80,14 @@ class LaunchPad(SourcePlugin):
                  .filter_by(api_url=task.self_link)).first()
             skip_data = self.skip_refresh(r)
             if skip_data[0]:
-                print("SKIP: %s (%s mins left)" % (task, skip_data[1]))
+                self.log("SKIP: %s (%s mins left)" % (task, skip_data[1]))
                 return
 
             if not r:
                 r = Review(type='UPDATE', api_url=task.self_link,
                            created=task.date_created.replace(tzinfo=None))
 
-            print(task)
+            self.log(task)
             title = task.source_branch.display_name
             r.url = task.web_link
             r.title = title
@@ -128,7 +126,7 @@ class LaunchPad(SourcePlugin):
         if active:
             self.parse_comments(comments, r)
         else:
-            print("Old ass shit, skipping")
+            self.log("Old ass shit, skipping")
 
     @wait_a_second
     def create_from_bug(self, task, bug):
@@ -139,7 +137,7 @@ class LaunchPad(SourcePlugin):
 
             skip_data = self.skip_refresh(r)
             if skip_data[0]:
-                print("SKIP: %s (%s mins left)" % (task, skip_data[1]))
+                self.log("SKIP: %s (%s mins left)" % (task, skip_data[1]))
                 return
 
             if not r:
@@ -148,7 +146,7 @@ class LaunchPad(SourcePlugin):
             else:
                 prev = r
 
-            print(task)
+            self.log(task)
             r.title = bug.title
             r.url = task.web_link
             r.state = bug_state(task)
@@ -178,7 +176,7 @@ class LaunchPad(SourcePlugin):
                          .filter_by(comment_id=m.self_link)).first()
 
             if rv and rv.created:
-                print(m.self_link)
+                self.log(m.self_link)
                 continue
 
             vote = dict(vote=determine_sentiment(m.vote),
@@ -201,7 +199,7 @@ class LaunchPad(SourcePlugin):
                  )
 
             if rv and rv.created:
-                print(m.self_link)
+                self.log(m.self_link)
                 continue
 
             vote = dict(vote=determine_sentiment(m.content),

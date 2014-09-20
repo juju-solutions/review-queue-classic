@@ -25,10 +25,11 @@ def is_source(o):
 
 
 class SourcePlugin(object):
-    def __init__(self, lp, db):
+    def __init__(self, lp=None, db=None):
         setup_logging('%s.ini' % os.environ.get('env', 'development'))
-        self.log = logging.getLogger('reviewq.plugins.%s' %
-                                     self.__class__.__name__)
+        self.logger = logging.getLogger('reviewq.plugins.%s' %
+                                        self.__class__.__name__)
+        self.log = self.logger.info
         if not lp:
             lp = get_lp()
 
