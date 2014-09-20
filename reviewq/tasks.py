@@ -45,14 +45,9 @@ def refresh(record):
 
 
 @celery.task(bind=True)
-def parse_tests(self, rt, results_url, status):
+def parse_tests(self, rt, results_url):
     with transaction.manager:
         rt.url = results_url
-
-        if status == 'FAIL':
-            rt.status = 'ERROR'
-            DBSession.add(rt)
-            return
 
         rt_json = '%s/json' % rt.url
         try:
