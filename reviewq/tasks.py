@@ -18,6 +18,10 @@ from .models import (
 )
 
 
+def import_from_lp():
+    LaunchPad().ingest('charmers')
+
+
 @worker_init.connect
 def bootstrap_pyramid(signal, sender):
     import os
@@ -38,11 +42,11 @@ def bootstrap_pyramid(signal, sender):
 
 @celery.task
 def refresh(record):
-    LaunchPad().refresh(record)
+    LaunchPad(db=DBSession).refresh(record)
 
 
-@celery.task
-def parse_tests(rt, results_url, status):
+@celery.task(bind=True)
+def parse_tests(self, rt, results_url, status):
     with transaction.manager:
         rt.url = results_url
 
@@ -52,16 +56,17 @@ def parse_tests(rt, results_url, status):
             return
 
         rt_json = '%s/json' % rt.url
-        response = requests.get(rt_json)
         try:
+            response = requests.get(rt_json, timeout=30)
             response.raise_for_status()
-            rt_data = rt_json.json()
-        except:
-            rt.status = 'UNKNOWN'
-            rt_data = None
+            rt_data = response.json()
+        except Exception as e:
+            self.retry(exc=e, countdown=300)
 
         if rt_data:
             rt.status = rt_data['result'].upper()
+
+        DBSession.add(rt)
 
         lp = get_lp(True)
 
@@ -82,12 +87,13 @@ def parse_tests(rt, results_url, status):
                        (rt.status, rt.url))
 
         if content:
-            subject = 'Review Queue Test Results'
+            subject = 'Review Queue Automated Test Results'
 
             if hasattr(item, 'createComment'):
                 # It's a merge request
                 item.createComment(content=content, vote=vote,
-                                   review_type='CBT', subject=subject)
-            elif hasattr(item, 'newMessage'):
+                                   review_type='Automated Testing',
+                                   subject=subject)
+            elif hasattr(item, 'bug'):
                 # It's a bug
-                item.newMessage(content=content, subject=subject)
+                item.bug.newMessage(content=content, subject=subject)
