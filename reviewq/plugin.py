@@ -25,25 +25,19 @@ def is_source(o):
 
 
 class SourcePlugin(object):
-    def __init__(self, lp=None, db=None):
-        setup_logging('%s.ini' % os.environ.get('env', 'development'))
-        self.logger = logging.getLogger('reviewq.plugins.%s' %
-                                        self.__class__.__name__)
+    def __init__(self, lp=None, log=None):
+        if not log:
+            setup_logging('%s.ini' % os.environ.get('env', 'development'))
+            log = logging.getLogger('reviewq.plugins.%s' %
+                                     self.__class__.__name__)
+
+        self.logger = log
         self.log = self.logger.info
+
         if not lp:
             lp = get_lp()
 
         self.lp = lp
-        if not db:
-            # This is stupid, find a better way to do this.
-            settings = get_appsettings('%s.ini' %
-                                       os.environ.get('ENV', 'development'),
-                                       options={})
-            engine = engine_from_config(settings, 'sqlalchemy.')
-            DBSession.configure(bind=engine)
-            db = DBSession
-
-        self.db = db
 
 
 class PluginManager(object):
