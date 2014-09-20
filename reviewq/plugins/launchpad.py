@@ -39,6 +39,11 @@ class LaunchPad(SourcePlugin):
                                                  'Queued',
                                                  'Superseded'])
             for merge in m:
+                r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+                skip = self.skip_refresh(r)
+                if skip[0]:
+                    self.log("SKIP: %s (%s mins left)" % (task, skip[1]))
+                    continue
                 self.create_from_merge(merge)
 
     def get_bugs(self):
@@ -54,7 +59,12 @@ class LaunchPad(SourcePlugin):
         for task in tasks:
             if '+source' in task.web_link:
                 continue
-            self.create_from_bug(task, task.bug)
+            r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+            skip = self.skip_refresh(r)
+            if skip[0]:
+                self.log("SKIP: %s (%s mins left)" % (task, skip[1]))
+                continue
+            self.create_from_bug(task)
 
     def skip_refresh(self, record):
         if not record or not record.syncd:
@@ -78,16 +88,12 @@ class LaunchPad(SourcePlugin):
     def create_from_merge(self, task):
         active = True
         with transaction.manager:
-            r = (self.db.query(Review)
-                 .filter_by(api_url=task.self_link)).first()
-            skip_data = self.skip_refresh(r)
-            if skip_data[0]:
-                self.log("SKIP: %s (%s mins left)" % (task, skip_data[1]))
-                return
+            r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
 
             if not r:
                 r = Review(type='UPDATE', api_url=task.self_link,
                            created=task.date_created.replace(tzinfo=None))
+                DBSession.add(r)
 
             self.log(task)
             title = task.source_branch.display_name
@@ -96,7 +102,7 @@ class LaunchPad(SourcePlugin):
             prevstate = r.state
             r.state = map_lp_state(task.queue_status)
             r.owner = create_user(task.registrant)
-            r.source = self.db.query(Source).filter_by(slug='lp').one()
+            r.source = DBSession.query(Source).filter_by(slug='lp').one()
             r.syncd = datetime.datetime.utcnow()
 
             if task.target_branch.sourcepackage:
@@ -123,7 +129,7 @@ class LaunchPad(SourcePlugin):
                 if comments[len(comments)-1].author == task.registrant:
                     r.state = 'FOLLOW UP'
 
-            self.db.add(r)
+            DBSession.add(r)
 
         if active:
             self.parse_comments(comments, r)
@@ -131,25 +137,26 @@ class LaunchPad(SourcePlugin):
             self.log("Old ass shit, skipping")
 
     @wait_a_second
-    def create_from_bug(self, task, bug):
+    def create_from_bug(self, task):
+        bug = task.bug
         prev = None
         with transaction.manager:
-            r = (self.db.query(Review)
-                 .filter_by(api_url=task.self_link)).first()
-
-            skip_data = self.skip_refresh(r)
-            if skip_data[0]:
-                self.log("SKIP: %s (%s mins left)" % (task, skip_data[1]))
-                return
-
+            r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+            print('before merge', DBSession.object_session(r))
             if not r:
                 r = Review(type='NEW', api_url=task.self_link,
                            created=task.date_created.replace(tzinfo=None))
+                DBSession.add(r)
             else:
                 prev = r
 
             self.log(task)
             r.title = bug.title
+            r = DBSession.merge(r)
+            print('after merge', DBSession.object_session(r))
+            print('after merge, owner', DBSession.object_session(r.owner))
+            print(r.owner)
+            r.owner = create_user(task.owner)
             r.url = task.web_link
             r.state = bug_state(task)
             r.updated = (bug.date_last_message.replace(tzinfo=None)
@@ -160,21 +167,20 @@ class LaunchPad(SourcePlugin):
                 if r.updated != prev.updated or r.state != prev.state:
                     r.unlock()
 
-            r.owner = create_user(task.owner)
-            r.source = self.db.query(Source).filter_by(slug='lp').one()
+            r.source = DBSession.query(Source).filter_by(slug='lp').one()
             r.syncd = datetime.datetime.utcnow()
 
             if r.state in ['REVIEWED', 'CLOSED']:
                 if bug.messages[len(bug.messages)-1].owner == task.assignee:
                     r.state = 'FOLLOW UP'
 
-            self.db.add(r)
+            DBSession.add(r)
 
         self.parse_messages(bug.messages, r)
 
     def parse_comments(self, comments, review):
         for m in comments:
-            rv = (self.db.query(ReviewVote)
+            rv = (DBSession.query(ReviewVote)
                          .filter_by(comment_id=m.self_link)).first()
 
             if rv and rv.created:
@@ -195,7 +201,7 @@ class LaunchPad(SourcePlugin):
             if first:
                 first = False  # WTF
                 continue
-            rv = (self.db.query(ReviewVote)
+            rv = (DBSession.query(ReviewVote)
                            .filter_by(comment_id=m.self_link)
                            .first()
                  )
@@ -213,13 +219,20 @@ class LaunchPad(SourcePlugin):
 
             create_vote(vote)
 
-    def refresh(self, record):
+    def refresh(self, record=None, id=None):
+        if not record and not id:
+            raise Exception('Need something to refresh')
+
+        if not record:
+            record = DBSession.query(Review).get(id)
+
         if not record.api_url:
             return False
 
         if record.type == 'NEW':
             self.create_from_bug(self.lp.load(record.api_url))
         elif record.type == 'UPDATE':
-            self.create_from_merge(self.lp.load(record.api_url))
+            #self.create_from_merge(self.lp.load(record.api_url))
+            pass
         else:
             raise Exception('Turn down for what')
