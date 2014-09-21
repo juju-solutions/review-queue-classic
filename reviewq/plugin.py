@@ -20,6 +20,10 @@ from pyramid.paster import (
 )
 
 
+setup_logging('%s.ini' % os.environ.get('env', 'development'))
+logger = logging.getLogger(__file__)
+
+
 def is_source(o):
     return inspect.isclass(o) and issubclass(o, SourcePlugin)
 
@@ -27,9 +31,7 @@ def is_source(o):
 class SourcePlugin(object):
     def __init__(self, lp=None, log=None):
         if not log:
-            setup_logging('%s.ini' % os.environ.get('env', 'development'))
-            log = logging.getLogger('reviewq.plugins.%s' %
-                                     self.__class__.__name__)
+            log = logger
 
         self.logger = log
         self.log = self.logger.info
