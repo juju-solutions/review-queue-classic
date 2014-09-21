@@ -18,6 +18,7 @@ from .models import (
 )
 
 
+@celery.task
 def import_from_lp():
     LaunchPad().ingest('charmers')
 
@@ -53,6 +54,7 @@ def refresh_active():
                                                  'PENDING',
                                                  'IN PROGRESS',
                                                  'FOLLOW UP',
+                                                 'READY',
                                                  'NEW']))).all()
     for a in active:
         refresh.delay(a)
