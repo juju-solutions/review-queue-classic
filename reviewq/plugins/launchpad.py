@@ -41,7 +41,7 @@ class LaunchPad(SourcePlugin):
                                                  'Queued',
                                                  'Superseded'])
             for merge in m:
-                r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
+                r = DBSession.query(Review).filter_by(api_url=merge.self_link).first()
                 if not r:
                     self.create_from_merge(merge)
 
