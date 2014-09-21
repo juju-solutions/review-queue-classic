@@ -86,9 +86,9 @@ class Review(Base):
     @pyramid.decorator.reify
     def age(self, use_updated=True):
         if use_updated:
-            t = self.updated
+            t = self.updated.replace(tzinfo=None)
         else:
-            t = self.created
+            t = self.created.replace(tzinfo=None)
 
         d = datetime.datetime.utcnow() - t
         hours = d.seconds * 60 * 60
@@ -161,7 +161,7 @@ class ReviewVote(Base):
 
     @pyramid.decorator.reify
     def updated(self):
-        return self.review.updated
+        return self.review.updated.replace(tzinfo=None)
 
 
 class ReviewCategory(Base):
