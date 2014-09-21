@@ -40,11 +40,8 @@ class LaunchPad(SourcePlugin):
                                                  'Superseded'])
             for merge in m:
                 r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
-                skip = self.skip_refresh(r)
-                if skip[0]:
-                    self.log("SKIP: %s (%s mins left)" % (task, skip[1]))
-                    continue
-                self.create_from_merge(merge)
+                if not r:
+                    self.create_from_merge(merge)
 
     def get_bugs(self):
         charm = self.lp.distributions['charms']
@@ -60,11 +57,8 @@ class LaunchPad(SourcePlugin):
             if '+source' in task.web_link:
                 continue
             r = DBSession.query(Review).filter_by(api_url=task.self_link).first()
-            skip = self.skip_refresh(r)
-            if skip[0]:
-                self.log("SKIP: %s (%s mins left)" % (task, skip[1]))
-                continue
-            self.create_from_bug(task)
+            if not r:
+                self.create_from_bug(task)
 
     def skip_refresh(self, record):
         if not record or not record.syncd:
