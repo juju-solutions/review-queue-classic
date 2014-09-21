@@ -19,6 +19,8 @@ from ..helpers import (
     create_vote,
 )
 
+from lazr.restfulclient import errors
+
 from ..plugin import SourcePlugin
 
 
@@ -217,10 +219,19 @@ class LaunchPad(SourcePlugin):
         if not record.api_url:
             return False
 
+        try:
+            task = self.lp.load(record.api_url)
+        except errors.NotFound:
+            # It was deleted, or something
+            record.status='ABANDONDED'
+            DBSession.add(record)
+            transaction.commit()
+            return
+
         if record.type == 'NEW':
-            self.create_from_bug(self.lp.load(record.api_url))
+            self.create_from_bug(task)
         elif record.type == 'UPDATE':
-            #self.create_from_merge(self.lp.load(record.api_url))
+            self.create_from_merge(task)
             pass
         else:
             raise Exception('Turn down for what')
