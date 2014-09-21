@@ -24,6 +24,7 @@ requires = [
     'velruse',
     'requests',
     'celery[redis]',
+    'psycopg2',
     ]
 
 setup(name='reviewq',
