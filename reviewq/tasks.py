@@ -43,17 +43,17 @@ def bootstrap_pyramid(signal, sender):
 @celery.task
 def refresh(record):
     from celery.utils.log import get_task_logger
-    LaunchPad(log=get_task_logger('reviewq.plugins.LaunchPad')).refresh(record)
+    LaunchPad().refresh(record)
 
 
 @celery.task
 def refresh_active():
-    active = DBSession.query(Review).filter(Review.state.in_(['REVIEWED',
-                                                              'PENDING',
-                                                              'IN PROGRESS',
-                                                              'FOLLOW UP',
-                                                              'NEW'])).filter_by(type='NEW').order_by(Review.id.desc()).first()
-    return refresh.delay(active)
+    active = (DBSession.query(Review)
+                       .filter(Review.state.in_(['REVIEWED',
+                                                 'PENDING',
+                                                 'IN PROGRESS',
+                                                 'FOLLOW UP',
+                                                 'NEW']))).all()
     for a in active:
         refresh.delay(a)
 
