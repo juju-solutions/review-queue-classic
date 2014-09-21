@@ -75,10 +75,9 @@ check: test lint
 .PHONY: all
 all: clean venv coverage lint
 
-database: | backend.sqlite
-backend.sqlite:
+database:
 	@venv/bin/initialize_backend_db $(ENV).ini
 
 .PHONY: start
-start: develop database
+start: develop
 	@venv/bin/pserve $(ENV).ini --reload
