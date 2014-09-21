@@ -31,6 +31,11 @@ celery.conf.update(
             'schedule': timedelta(seconds=600),
         },
     },
+    CELERY_ROUTES={
+        'reviewq.tasks.parse_tests': {
+            'queue': 'priority'
+        },
+    },
 )
 
 if __name__ == '__main__':
