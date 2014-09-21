@@ -20,7 +20,7 @@ from pyramid.paster import (
 )
 
 
-setup_logging('%s.ini' % os.environ.get('env', 'development'))
+setup_logging('%s.ini' % os.environ.get('ENV', 'development'))
 logger = logging.getLogger(__file__)
 
 
