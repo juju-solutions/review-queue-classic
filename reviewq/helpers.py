@@ -98,7 +98,6 @@ def create_vote(vote):
 
 def create_user(profile):
     p = DBSession.query(Profile).filter_by(url=profile.web_link).first()
-    print('create_user', DBSession.object_session(p.user))
 
     if not p:
         p = Profile(url=profile.web_link)
