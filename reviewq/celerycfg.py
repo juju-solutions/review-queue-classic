@@ -26,6 +26,10 @@ celery.conf.update(
             'task': 'reviewq.tasks.refresh_active',
             'schedule': timedelta(seconds=120),
         },
+        'ingest_lp': {
+            'task': 'reviewq.tasks.ingest_from_lp',
+            'schedule': timedelta(seconds=600),
+        },
     },
 )
 
