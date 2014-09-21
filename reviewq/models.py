@@ -149,6 +149,7 @@ class ReviewTest(Base):
     __tablename__ = 'review_test'
     id = Column(Integer, primary_key=True)
     review_id = Column(Integer, ForeignKey('review.id'))
+    requester_id = Column(Integer, ForeignKey('user.id'))
     status = Column(Text)  # PENDING, PASS, FAIL?
     url = Column(Text)
 
@@ -157,6 +158,7 @@ class ReviewTest(Base):
 
     review = relationship('Review', backref=backref('tests'),
                           order_by="ReviewTest.id")
+    requester = relationship('User')
 
 
 class ReviewVote(Base):

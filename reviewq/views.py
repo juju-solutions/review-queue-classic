@@ -199,7 +199,8 @@ def test_review(request):
     if not review:
         return dict(error='Unable to find requested review %s' % review_id)
 
-    rt = ReviewTest(status='PENDING', review=review, finished=None)
+    rt = ReviewTest(status='PENDING', review=review, finished=None,
+                    requester=user)
     DBSession.add(rt)
     DBSession.flush()
 
