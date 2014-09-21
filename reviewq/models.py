@@ -10,9 +10,11 @@ from sqlalchemy import (
     Enum,
     DateTime,
     ForeignKey,
+    TypeDecorator,
 )
 
 from sqlalchemy.ext.declarative import declarative_base
+from dateutil.tz import tzutc
 
 from sqlalchemy.orm import (
     scoped_session,
@@ -25,6 +27,18 @@ from zope.sqlalchemy import ZopeTransactionExtension
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
+
+
+class UTCDateTime(TypeDecorator):
+    impl = DateTime
+
+    def process_bind_param(self, value, engine):
+        if value is not None:
+            return value.replace(tzinfo=tzutc())
+
+    def process_result_value(self, value, engine):
+        if value is not None:
+            return value.replace(tzinfo=None)
 
 
 class Review(Base):
@@ -44,12 +58,11 @@ class Review(Base):
     state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
                         'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP', name='review_state'))
 
-    created = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
-    updated = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
-    syncd = Column(DateTime(timezone=True),
-                   default=datetime.datetime.utcnow,
+    created = Column(UTCDateTime, default=datetime.datetime.utcnow)
+    updated = Column(UTCDateTime, default=datetime.datetime.utcnow)
+    syncd = Column(UTCDateTime, default=datetime.datetime.utcnow,
                    onupdate=datetime.datetime.utcnow)
-    locked = Column(DateTime(timezone=True))
+    locked = Column(UTCDateTime)
 
     category = relationship('ReviewCategory')
     source = relationship('Source')
@@ -139,8 +152,8 @@ class ReviewTest(Base):
     status = Column(Text)  # PENDING, PASS, FAIL?
     url = Column(Text)
 
-    created = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
-    finished = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+    created = Column(UTCDateTime, default=datetime.datetime.utcnow)
+    finished = Column(UTCDateTime, default=datetime.datetime.utcnow)
 
     review = relationship('Review', backref=backref('tests'),
                           order_by="ReviewTest.id")
@@ -154,7 +167,7 @@ class ReviewVote(Base):
     review_id = Column(Integer, ForeignKey('review.id'))
 
     vote = Column(Enum('POSITIVE', 'NEGATIVE', 'COMMENT', name='reviewvote_vote'))
-    created = Column(DateTime(timezone=True))
+    created = Column(UTCDateTime)
 
     owner = relationship('User', backref=backref('votes'))
     review = relationship('Review', backref=backref('votes'))
@@ -193,8 +206,8 @@ class Profile(Base):
     url = Column(Text)
     claimed = Column(Text)
 
-    created = Column(DateTime(timezone=False), default=datetime.datetime.utcnow)
-    updated = Column(DateTime(timezone=False), onupdate=datetime.datetime.utcnow)
+    created = Column(UTCDateTime, default=datetime.datetime.utcnow)
+    updated = Column(UTCDateTime, onupdate=datetime.datetime.utcnow)
 
     source = relationship('Source')
     user = relationship('User', backref=backref('profiles'))
