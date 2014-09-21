@@ -38,11 +38,11 @@ class Review(Base):
     lock_id = Column(Integer, ForeignKey('user.id'))
 
     title = Column(Text)
-    type = Column(Enum('NEW', 'UPDATE'))
+    type = Column(Enum('NEW', 'UPDATE', name='review_type'))
     url = Column(Text)
     api_url = Column(Text)
     state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
-                        'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP'))
+                        'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP', name='review_state'))
 
     created = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     updated = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
@@ -153,7 +153,7 @@ class ReviewVote(Base):
     user_id = Column(Integer, ForeignKey('user.id'))
     review_id = Column(Integer, ForeignKey('review.id'))
 
-    vote = Column(Enum('POSITIVE', 'NEGATIVE', 'COMMENT'))
+    vote = Column(Enum('POSITIVE', 'NEGATIVE', 'COMMENT', name='reviewvote_vote'))
     created = Column(DateTime(timezone=True))
 
     owner = relationship('User', backref=backref('votes'))
