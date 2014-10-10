@@ -164,15 +164,15 @@
             </tr>
           </thead>
           <tbody>
-            <tr class="${rv.review.state.lower().replace(' ', '')}" tal:repeat="rv reviews">
-              <td>${rv.review.age}</td>
-              <td>${rv.review.state}</td>
+            <tr class="${review.state.lower().replace(' ', '')}" tal:repeat="review reviews">
+              <td>${review.age}</td>
+              <td>${review.state}</td>
               <td>
-                <a href="${request.route_path('show_review', review=rv.review.id)}">${rv.review.title}</a>
-                <a href="${rv.review.url}"><i class="external url icon"></i></a>
+                <a href="${request.route_path('show_review', review=review.id)}">${review.title}</a>
+                <a href="${review.url}"><i class="external url icon"></i></a>
               </td>
-              <td><a href="${rv.review.url}">${rv.review.title}</a></td>
-              <td>${len(rv.review.votes)}</td>
+              <td><a href="${review.url}">${review.title}</a></td>
+              <td>${len(review.votes)}</td>
             </tr>
           </tbody>
         </table>

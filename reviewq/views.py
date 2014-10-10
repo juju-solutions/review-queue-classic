@@ -248,19 +248,23 @@ def user_json(request):
                 submitted=ReviewSerializer(data['submitted'], exclude=('owner', ), many=True).data)
 
 
-@view_config(route_name='view_user', accept="text/html", renderer='templates/user.pt')
+@view_config(route_name='view_user',
+             accept="text/html",
+             renderer='templates/user.pt')
 def user(request):
     username = request.matchdict['username']
     user = DBSession.query(Profile).filter_by(username=username).first().user
     if not user:
         return HTTPNotFound('No such user')
-    submitted = DBSession.query(Review).filter_by(owner=user).order_by(Review.updated).all()
-    reviews = (DBSession.query(ReviewVote)
-                        .filter_by(owner=user)
-                        .join(ReviewVote.review)
-                        .filter(Review.owner != user)
-                        .group_by(Review)
-                        .order_by(Review.updated)
+    submitted = (DBSession.query(Review)
+                          .filter_by(owner=user)
+                          .order_by(Review.updated)
+                ).all()
+    reviews = (DBSession.query(Review)
+                        .filter(Review.id.in_(DBSession.query(Review.id)
+                                                       .join(ReviewVote)
+                                                       .filter_by(owner=user)),
+                                Review.owner != user)
               ).all()
     locked = (DBSession.query(Review)
                        .filter_by(locker=user)
