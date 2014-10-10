@@ -265,6 +265,7 @@ def user(request):
                                                        .join(ReviewVote)
                                                        .filter_by(owner=user)),
                                 Review.owner != user)
+                        .order_by(Review.updated)
               ).all()
     locked = (DBSession.query(Review)
                        .filter_by(locker=user)
