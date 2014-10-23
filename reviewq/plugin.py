@@ -36,10 +36,11 @@ class SourcePlugin(object):
         self.logger = log
         self.log = self.logger.info
 
-        if not lp:
-            lp = get_lp()
+    def ingest(self, user):
+        raise NotImplementedError
 
-        self.lp = lp
+    def refresh(self, record):
+        raise NotImplementedError
 
 
 class PluginManager(object):

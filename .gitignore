@@ -5,3 +5,4 @@ venv/*
 *.sqlite
 devel/*
 lp-creds
+celerybeat-schedule

@@ -17,6 +17,7 @@ from ..helpers import (
     create_series,
     determine_sentiment,
     create_vote,
+    get_lp
 )
 
 from lazr.restfulclient import errors
@@ -25,6 +26,17 @@ from ..plugin import SourcePlugin
 
 
 class LaunchPad(SourcePlugin):
+    def __init__(self, log=None):
+        lp = None
+        if not lp:
+            try:
+                lp = get_lp(True)
+            except:
+                lp = get_lp()
+
+        self.lp = lp
+        super(LaunchPad, self).__init__(log)
+
     def ingest(self, person):
         self.person = self.lp.people[person]
         self.get_bugs()
@@ -183,7 +195,9 @@ class LaunchPad(SourcePlugin):
                         comment_id=m.self_link,
                         created=m.date_created.replace(tzinfo=None),
                        )
-            create_vote(vote)
+
+            with transaction.manager:
+                create_vote(vote)
 
     def parse_messages(self, comments, review):
         first = True
@@ -207,7 +221,8 @@ class LaunchPad(SourcePlugin):
                         created=m.date_created.replace(tzinfo=None),
                        )
 
-            create_vote(vote)
+            with transaction.manager:
+                create_vote(vote)
 
     def refresh(self, record=None, id=None):
         if not record and not id:
