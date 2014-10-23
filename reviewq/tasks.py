@@ -97,7 +97,7 @@ def parse_tests(self, rt, results_url):
                        (rt.status, rt.url))
 
         if content:
-            subject = 'Review Queue Automated Test Results'
+            subject = 'Automated Test Results: %s' % rt.review.title
 
             if hasattr(item, 'createComment'):
                 # It's a merge request
