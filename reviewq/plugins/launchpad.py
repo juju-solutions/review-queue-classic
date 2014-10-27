@@ -59,9 +59,8 @@ class LaunchPad(SourcePlugin):
 
     def get_bugs(self):
         charm = self.lp.distributions['charms']
-        # This won't work in a GH world.
-        # branch_filter = "Show only Bugs with linked Branches"
-        branch_filter = 'Show all bugs'
+        branch_filter = "Show only Bugs with linked Branches"
+        #branch_filter = 'Show all bugs'
         tasks = charm.searchTasks(linked_branches=branch_filter,
                                   tags=['-not-a-charm'],
                                   status=['New', 'Incomplete', 'Opinion',
