@@ -63,6 +63,7 @@ class LaunchPad(SourcePlugin):
         # branch_filter = "Show only Bugs with linked Branches"
         branch_filter = 'Show all bugs'
         tasks = charm.searchTasks(linked_branches=branch_filter,
+                                  tags=['-not-a-charm'],
                                   status=['New', 'Incomplete', 'Opinion',
                                           "Won't Fix", 'Confirmed', 'Triaged',
                                           'In Progress', 'Fix Committed',
@@ -177,6 +178,8 @@ class LaunchPad(SourcePlugin):
             if r.state in ['REVIEWED', 'CLOSED']:
                 if bug.messages[len(bug.messages)-1].owner == task.assignee:
                     r.state = 'FOLLOW UP'
+            if 'not-a-charm' in bug.tags:
+                r.state = 'ABANDONDED'
 
             DBSession.add(r)
 
