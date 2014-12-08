@@ -110,7 +110,7 @@ def create_user(profile):
     p.source = DBSession.query(Source).filter_by(slug='lp').first()
 
     r.name = profile.display_name
-    r.is_charmer = profile in get_lp().people['charmers'].members
+    r.is_charmer = profile in get_lp(True).people['charmers'].members
 
     p.user = r
 
