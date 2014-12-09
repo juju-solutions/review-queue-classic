@@ -57,7 +57,11 @@ def dashboard(request):
 
 @view_config(route_name='home', accept='application/json', renderer='json')
 def dashboard_json(req):
-    return dashboard(req)
+    d = dashboard(req)
+    out = {'reviews': [ReviewSerializer(r).data for r in d['reviews']],
+           'incoming': [ReviewSerializer(r).data for r in d['incoming']],
+          }
+    return out
 
 
 @view_config(route_name='find_user', renderer='templates/user.pt')
@@ -243,7 +247,7 @@ def review(req):
 @view_config(route_name='show_review', accept='application/json',
              renderer='json')
 def review_json(req):
-    return review(req)
+    return ReviewSerializer(review(req)['review']).data
 
 
 @view_config(route_name='id_user', accept="application/json", renderer='json')
