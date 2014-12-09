@@ -41,7 +41,8 @@ from tasks import parse_tests
 log = logging.getLogger(__name__)
 
 
-@view_config(route_name='home', renderer='templates/dashboard.pt')
+@view_config(route_name='home', accept='text/html',
+             renderer='templates/dashboard.pt')
 def dashboard(request):
     #reviews = DBSession.query(Review).group_by(Review.review_category_id).all()
     reviews = DBSession.query(Review).filter(Review.state != 'REVIEWED',
@@ -52,6 +53,11 @@ def dashboard(request):
                                              Review.state != 'ABANDONDED').order_by(Review.updated).all()
     incoming = DBSession.query(Review).filter_by(state='NEW').order_by(Review.updated).all()
     return dict(reviews=reviews, incoming=incoming)
+
+
+@view_config(route_name='home', accept='application/json', renderer='json')
+def dashboard_json(req):
+    return dashboard(req)
 
 
 @view_config(route_name='find_user', renderer='templates/user.pt')
@@ -113,6 +119,7 @@ def login(req):
 
     req.session['user'] = user.id
     return HTTPFound(location=req.route_url('home'))
+
 
 @view_config(route_name='query', renderer='templates/search.pt')
 def serach(request):
@@ -221,7 +228,8 @@ def test_review(request):
     return dict(error=None)
 
 
-@view_config(route_name='show_review', renderer='templates/review.pt')
+@view_config(route_name='show_review', accept='text/html',
+             renderer='templates/review.pt')
 def review(req):
     review_id = req.matchdict['review']
     review = DBSession.query(Review).filter_by(id=review_id).first()
@@ -230,6 +238,12 @@ def review(req):
         return HTTPNotFound('No such review')
 
     return dict(review=review)
+
+
+@view_config(route_name='show_review', accept='application/json',
+             renderer='json')
+def review_json(req):
+    return review(req)
 
 
 @view_config(route_name='id_user', accept="application/json", renderer='json')
