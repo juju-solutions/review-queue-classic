@@ -16,7 +16,7 @@ def main(global_config, **settings):
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
-    session_factory = SignedCookieSessionFactory('whateve')
+    session_factory = SignedCookieSessionFactory('whateve', timeout=7200)
 
     config = Configurator(settings=settings)
     config.set_session_factory(session_factory)
