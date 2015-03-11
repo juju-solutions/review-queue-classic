@@ -246,6 +246,11 @@ class LaunchPad(SourcePlugin):
             DBSession.add(record)
             transaction.commit()
             return
+        except ValueError:
+            record.status='CLOSED'
+            DBSession.add(record)
+            transaction.commit()
+            return
 
         if record.type == 'NEW':
             self.create_from_bug(task)

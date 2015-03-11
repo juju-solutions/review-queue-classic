@@ -24,11 +24,11 @@ celery.conf.update(
     CELERYBEAT_SCHEDULE={
         'refresh_active': {
             'task': 'reviewq.tasks.refresh_active',
-            'schedule': timedelta(seconds=120),
+            'schedule': timedelta(seconds=1200),
         },
         'ingest_lp': {
             'task': 'reviewq.tasks.import_from_lp',
-            'schedule': timedelta(seconds=600),
+            'schedule': timedelta(seconds=1300),
         },
     },
     CELERY_ROUTES={

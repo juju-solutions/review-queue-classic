@@ -65,12 +65,13 @@ def parse_tests(self, rt, results_url):
     with transaction.manager:
         rt.url = results_url
 
-        rt_json = '%s/json' % rt.url
+        rt_json = '%s/json' % results_url
         try:
             response = requests.get(rt_json, timeout=30)
             response.raise_for_status()
             rt_data = response.json()
         except Exception as e:
+            DBSession.add(rt)
             self.retry(exc=e, countdown=300)
 
         if rt_data:
