@@ -30,8 +30,30 @@
             </td>
             <td><a href="/user/${review.owner.profiles[0].username}">${review.owner.name}</a></td>
             <td>${len(review.votes)}</td>
-            <td tal:condition="review.test"><i class="test sign ${review.test.color} icon"></i></td>
-            <td tal:condition="python: not review.test"><i class="test empty checkbox icon" data-content="No tests have been scheduled" data-variation="inverted"></i></td>
+            <td>
+              <a href="${request.route_path('show_review', review=review.id)}">
+                <i tal:condition="review.test_status == 'PASS'"
+                   class="test sign green icon"
+                   data-variation="inverted"
+                   data-content="Tests have passed on at least one substrate">
+                </i>
+                <i tal:condition="review.test_status == 'FAIL'"
+                   class="test sign red icon"
+                   data-variation="inverted"
+                   data-content="Tests are failing">
+                </i>
+                <i tal:condition="review.test_status == 'QUEUED'"
+                   class="test sign black icon"
+                   data-variation="inverted"
+                   data-content="Tests are queued">
+                </i>
+                <i tal:condition="not review.test_status"
+                   class="test empty checkbox icon"
+                   data-variation="inverted"
+                   data-content="No tests have been scheduled">
+                </i>
+              </a>
+            </td>
             <td>
               <i data-review-id="${review.id}" data-sort-value="1" class="locker unlock icon" tal:condition="python:not review.locked"></i>
               <i data-review-id="${review.id}" data-sort-value="0" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>
@@ -74,8 +96,30 @@
             <td>
               ${len(review.votes)}
             </td>
-            <td tal:condition="review.test"><i class="test sign ${review.test.color} icon" data-content="${review.test.status}" data-variation="inverted"></i></td>
-            <td tal:condition="python: not review.test"><i class="test empty checkbox icon" data-content="No tests have been scheduled" data-variation="inverted"></i></td>
+            <td>
+              <a href="${request.route_path('show_review', review=review.id)}">
+                <i tal:condition="review.test_status == 'PASS'"
+                   class="test sign green icon"
+                   data-variation="inverted"
+                   data-content="Tests have passed on at least one substrate">
+                </i>
+                <i tal:condition="review.test_status == 'FAIL'"
+                   class="test sign red icon"
+                   data-variation="inverted"
+                   data-content="Tests are failing">
+                </i>
+                <i tal:condition="review.test_status == 'QUEUED'"
+                   class="test sign black icon"
+                   data-variation="inverted"
+                   data-content="Tests are queued">
+                </i>
+                <i tal:condition="not review.test_status"
+                   class="test empty checkbox icon"
+                   data-variation="inverted"
+                   data-content="No tests have been scheduled">
+                </i>
+              </a>
+            </td>
             <td>
               <i data-review-id="${review.id}" data-sort-value="1" class="locker unlock icon" tal:condition="python:not review.locked"></i>
               <i data-review-id="${review.id}" data-sort-value="0" data-variation="inverted" data-content="Locked by ${review.locker.name}" class="locker lock icon" tal:condition="python:review.locked"></i>

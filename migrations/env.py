@@ -1,36 +1,14 @@
 from __future__ import with_statement
 
-import os
-
 from alembic import context
-from ConfigParser import ConfigParser
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 
 from reviewq.models import Base
 
-
-def load_ini(ini_file):
-    """Load the settings for the bookie.ini file."""
-    ini = ConfigParser()
-    ini_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ini_file)
-    ini.readfp(open(ini_path))
-    here = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
-    ini.set('app:main', 'here', here)
-
-    return ini
-
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-
-app_ini = config.get_main_option('app.ini',
-                                 '%s.ini' % os.environ.get('ENV',
-                                                           'development'))
-app_config = load_ini(app_ini)
-sa_url = app_config.get('app:main', 'sqlalchemy.url')
-config.set_main_option('sqlalchemy.url', sa_url)
 
 fileConfig(config.config_file_name)
 
@@ -57,6 +35,7 @@ def run_migrations_offline():
     with context.begin_transaction():
         context.run_migrations()
 
+
 def run_migrations_online():
     """Run migrations in 'online' mode.
 
@@ -65,15 +44,15 @@ def run_migrations_online():
 
     """
     engine = engine_from_config(
-                config.get_section(config.config_ini_section),
-                prefix='sqlalchemy.',
-                poolclass=pool.NullPool)
+        config.get_section(config.config_ini_section),
+        prefix='sqlalchemy.',
+        poolclass=pool.NullPool)
 
     connection = engine.connect()
     context.configure(
-                connection=connection,
-                target_metadata=target_metadata
-                )
+        connection=connection,
+        target_metadata=target_metadata
+    )
 
     try:
         with context.begin_transaction():
@@ -85,4 +64,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

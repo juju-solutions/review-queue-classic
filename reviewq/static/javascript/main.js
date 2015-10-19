@@ -131,25 +131,6 @@ $(function() {
       }
     });
   });
-  $('.test.icon').click(function() {
-    var self = $(this);
-    var parent = self.closest('tr');
-    var review_id = parent.data('review')
-
-    self.addClass('loading');
-
-    $.ajax("/review/"+review_id+"/test", {
-      dataType: 'json'
-    }).done(function(data) {
-      self.removeClass('loading');
-      if(data.error) {
-        message('error', 'Failed to request test', data.error);
-      } else {
-        $(self).popup('hide');
-        $(self).removeClass('empty checkbox red green').addClass('sign')
-      }
-    });
-  });
   $('.locker.icon').click(function() {
     var review_id = $(this).data('review-id');
     var self = $(this);

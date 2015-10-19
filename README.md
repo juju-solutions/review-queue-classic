@@ -38,6 +38,51 @@ This will open up LaunchPad in your browser, requesting OAUTH access from the Re
 **NOTE**: This will run all actions as your user.
 
 
+## Test Integration - How It Works
+
+```
+New Review item is ingested
+  Send request to jenkins for each substrate in defaults
+    if request 200:
+      Create ReviewTest, status Pending
+    else:
+      Create ReviewTest, status Retry
+
+Jenkins build script
+  Callback at beginning, set status Running
+  Callback at end, set test outcome
+
+Callback handler
+  update ReviewTest status
+  if status != Running
+    update ReviewTest result_url
+    update LP item (see TODO)
+
+Celery task
+  For items in Retry
+    Send jenkins request
+      if 200, set Pending
+  For items in Pending/Running beyond timeout
+    if Running and result json exists
+      set status from json
+    else
+      Send new jenkins request
+        if 200 set Pending else set Retry
+
+UI
+  The Square
+    Color
+      White if no tests created
+      else Green if any tests successful
+      else Red if any tests failed
+      else Black (tests are queued)
+  Review Item detail page
+    Show list of existing tests with status
+    Allow creation of new test(s)
+      Launch on one or more clouds (checkboxes)
+```
+
+
 ## Contributing
 
 ### Database Schema
