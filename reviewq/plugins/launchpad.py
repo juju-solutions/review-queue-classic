@@ -159,7 +159,7 @@ class LaunchPad(SourcePlugin):
                 )
                 r.source = Source.get(slug='lp')
                 DBSession.add(r)
-                if (bug_state(task.queue_status) not in
+                if (bug_state(task) not in
                         ('ABANDONED', 'CLOSED', 'MERGED')):
                     r.create_tests(self.settings)
             else:
