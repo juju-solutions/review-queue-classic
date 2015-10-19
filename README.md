@@ -25,7 +25,6 @@ Run from the root project directory:
 The ```-B``` flag tells celery to run our tasks periodically:
 - reviewq.tasks.import_from_lp -- Ingests from LaunchPad, every 10 minutes
 - reviewq.tasks.refresh_active, -- Refresh, every 2 minutes
-- reviewq.tasks.parse_tests -- Parse test results, on demand
 - reviewq.tasks.refresh -- Called by refresh_active to refresh one record, on demand
 
 
