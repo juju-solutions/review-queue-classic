@@ -315,6 +315,8 @@ class ReviewTest(Base):
         except:
             return False
 
+        from .tasks import update_lp_item
+
         passed = all(
             test.get('returncode', 0) == 0
             for test in result_data.get('tests', {})
@@ -324,6 +326,8 @@ class ReviewTest(Base):
             result_data['finished'],
             '%Y-%m-%dT%H:%M:%SZ'
         )
+        update_lp_item.delay(self)
+
         return True
 
 
