@@ -122,7 +122,8 @@ def login(req):
             # Okay, so we still don't have a profile. wtf guys.
             # GET YOUR REVIEW ON. Create a user for now? Sure.
             lp = get_lp()
-            person = lp.load('https://api.launchpad.net/1.0/~%s' % username)
+            person = lp.load('{}/~{}'.format(
+                req.registry.settings['launchpad.api.url'], username))
             user = create_user(person)
             profile = user.profile[0]
 

@@ -1,9 +1,10 @@
 from celerycfg import celery
 from celery.signals import worker_init
 
-from .plugins.launchpad import LaunchPad
 from launchpadlib import errors
+from pyramid.settings import asbool
 
+from .plugins.launchpad import LaunchPad
 from .helpers import (
     get_lp,
 )
@@ -86,7 +87,7 @@ def update_lp_item(self, rt):
             'The results (%s) are in and available here: %s' %
             (rt.status, rt.url))
 
-    if content and False:
+    if content and asbool(celery.settings.get('testing.comments')):
         subject = (
             '%s Test Results: %s' % (
                 rt.substrate.upper(), rt.review.title))

@@ -36,13 +36,25 @@ class LaunchPad(SourcePlugin):
 
     def ingest(self, person):
         self.person = self.lp.people[person]
-        self.get_bugs()
         self.get_merges()
+        self.get_bugs()
 
     def get_merges(self):
+        print("Searching for new merges...")
+        charm_branch_prefix = '{}/charms/'.format(
+            self.settings['launchpad.api.url'])
+
         b = self.person.getBranches()
 
         for branch in b:
+            if not (branch.sourcepackage_link or '').startswith(
+                    charm_branch_prefix):
+                print("Skipping non-charm branch: {}".format(
+                    branch.sourcepackage_link))
+                continue
+
+            print("Inspecting charm branch: {}".format(
+                branch.sourcepackage_link))
             m = branch.getMergeProposals(status=['Work in progress',
                                                  'Needs review', 'Approved',
                                                  'Rejected', 'Merged',
@@ -50,11 +62,18 @@ class LaunchPad(SourcePlugin):
                                                  'Queued',
                                                  'Superseded'])
             for merge in m:
+                merge_state = map_lp_state(merge.queue_status)
+                print("Inspecting merge: {} ({})".format(
+                    merge.self_link, merge_state))
                 r = Review.get(api_url=merge.self_link)
                 if not r:
+                    if merge_state in ('ABANDONDED', 'CLOSED', 'MERGED'):
+                        continue
+                    print("Creating merge: ".format(merge.self_link))
                     self.create_from_merge(merge)
 
     def get_bugs(self):
+        print("Searching for new bugs...")
         charm = self.lp.distributions['charms']
         branch_filter = "Show only Bugs with linked Branches"
         #branch_filter = 'Show all bugs'
@@ -67,10 +86,16 @@ class LaunchPad(SourcePlugin):
                                           'Incomplete (with response)',
                                           'Incomplete (without response)'])
         for task in tasks:
+            bug_status = bug_state(task)
+            print("Inspecting bug: {} ({})".format(
+                task.self_link, bug_status))
             if '+source' in task.web_link:
                 continue
             r = Review.get(api_url=task.self_link)
             if not r:
+                if bug_status in ('ABANDONDED', 'CLOSED'):
+                    continue
+                print("Creating bug: {}".format(task.self_link))
                 self.create_from_bug(task)
 
     def skip_refresh(self, record):
@@ -101,12 +126,12 @@ class LaunchPad(SourcePlugin):
                 r = Review(
                     type='UPDATE',
                     api_url=task.self_link,
+                    test_url=task.web_link,
                     created=task.date_created.replace(tzinfo=None)
                 )
                 r.source = Source.get(slug='lp')
                 DBSession.add(r)
-                if (map_lp_state(task.queue_status) not in
-                        ('ABANDONED', 'CLOSED', 'MERGED')):
+                if (map_lp_state(task.queue_status) in ('PENDING', 'NEW')):
                     r.create_tests(self.settings)
             else:
                 r.refresh_tests(self.settings)
@@ -155,12 +180,12 @@ class LaunchPad(SourcePlugin):
                 r = Review(
                     type='NEW',
                     api_url=task.self_link,
+                    test_url=bug.linked_branches[0].branch.bzr_identity,
                     created=task.date_created.replace(tzinfo=None)
                 )
                 r.source = Source.get(slug='lp')
                 DBSession.add(r)
-                if (bug_state(task) not in
-                        ('ABANDONED', 'CLOSED', 'MERGED')):
+                if (bug_state(task) in ('PENDING', 'NEW')):
                     r.create_tests(self.settings)
             else:
                 r.refresh_tests(self.settings)

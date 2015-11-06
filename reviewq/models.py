@@ -158,7 +158,7 @@ class Review(Base):
             review_test.send_ci_request(settings)
 
     def refresh_tests(self, settings):
-        if self.state in ('ABANDONED', 'CLOSED'):
+        if self.state in ('ABANDONDED', 'CLOSED'):
             return self.cancel_tests()
 
         for t in self.get_tests_for_retry():

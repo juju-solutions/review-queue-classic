@@ -178,7 +178,7 @@
       </div>
     </div>
     <div tal:condition="python:user" class="five wide column">
-      <h1>${user.name} <img class="ui avatar image" src="https://api.launchpad.net/1.0/~${user.profiles[0].username}/mugshot"></h1>
+      <h1>${user.name} <img class="ui avatar image" src="${request.registry.settings['launchpad.api.url']}/~${user.profiles[0].username}/mugshot"></h1>
       <div class="center badges">
         <div class="ui green label">Charmer</div>
       </div>
