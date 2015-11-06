@@ -41,44 +41,52 @@ This will open up LaunchPad in your browser, requesting OAUTH access from the Re
 
 ```
 New Review item is ingested
-  Send request to jenkins for each substrate in defaults
-    if request 200:
-      Create ReviewTest, status Pending
-    else:
-      Create ReviewTest, status Retry
+  if item in PENDING/NEW status
+    Send request to jenkins for each substrate in testing defaults
+      if request 200:
+        Create ReviewTest, status Pending
+      else:
+        Create ReviewTest, status Retry
 
-Jenkins build script
-  Callback at beginning, set status Running
-  Callback at end, set test outcome
+Jenkins Build Script
+  Callback to RevQ at beginning of job, set status Running
+  Callback to RevQ at end of job, set test outcome
 
-Callback handler
-  update ReviewTest status
+RevQ Callback Handler
+  Update ReviewTest status and url (jenkins build url)
   if status != Running
-    update ReviewTest result_url
-    update LP item (see TODO)
+    set ReviewTest.finished timestamp
+    queue celery task to post test results as vote/comment to lp
 
-Celery task
-  For items in Retry
+Celery refresh task (periodic refresh of open items in RevQ)
+  If item is Abandoned/Closed
+    Cancel any pending/unfinished tests
+    return
+
+  For item tests in Retry status
     Send jenkins request
       if 200, set Pending
-  For items in Pending/Running beyond timeout
+  For item tests in Pending/Running status beyond timeout
     if Running and result json exists
-      set status from json
+      set test status and finished timestamp from json
     else
       Send new jenkins request
         if 200 set Pending else set Retry
 
 UI
-  The Square
+  The Square (Dashboard)
     Color
       White if no tests created
       else Green if any tests successful
       else Red if any tests failed
       else Black (tests are queued)
+    OnClick
+      goes to Review Item detail page
+
   Review Item detail page
     Show list of existing tests with status
     Allow creation of new test(s)
-      Launch on one or more clouds (checkboxes)
+      Launch on one or more clouds (select box)
 ```
 
 
