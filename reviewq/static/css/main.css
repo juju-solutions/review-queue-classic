@@ -268,3 +268,7 @@ a i.icon {
 .ui.sortable.table thead th.nosort:after {
   margin: 0;
 }
+
+a .test {
+  color: black;
+}

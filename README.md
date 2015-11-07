@@ -25,7 +25,6 @@ Run from the root project directory:
 The ```-B``` flag tells celery to run our tasks periodically:
 - reviewq.tasks.import_from_lp -- Ingests from LaunchPad, every 10 minutes
 - reviewq.tasks.refresh_active, -- Refresh, every 2 minutes
-- reviewq.tasks.parse_tests -- Parse test results, on demand
 - reviewq.tasks.refresh -- Called by refresh_active to refresh one record, on demand
 
 
@@ -36,6 +35,59 @@ The ```-B``` flag tells celery to run our tasks periodically:
 This will open up LaunchPad in your browser, requesting OAUTH access from the Review Queue application. The credentials will be cached in ```lp-creds```
 
 **NOTE**: This will run all actions as your user.
+
+
+## Test Integration - How It Works
+
+```
+New Review item is ingested
+  if item in PENDING/NEW status
+    Send request to jenkins for each substrate in testing defaults
+      if request 200:
+        Create ReviewTest, status Pending
+      else:
+        Create ReviewTest, status Retry
+
+Jenkins Build Script
+  Callback to RevQ at beginning of job, set status Running
+  Callback to RevQ at end of job, set test outcome
+
+RevQ Callback Handler
+  Update ReviewTest status and url (jenkins build url)
+  if status != Running
+    set ReviewTest.finished timestamp
+    queue celery task to post test results as vote/comment to lp
+
+Celery refresh task (periodic refresh of open items in RevQ)
+  If item is Abandoned/Closed
+    Cancel any pending/unfinished tests
+    return
+
+  For item tests in Retry status
+    Send jenkins request
+      if 200, set Pending
+  For item tests in Pending/Running status beyond timeout
+    if Running and result json exists
+      set test status and finished timestamp from json
+    else
+      Send new jenkins request
+        if 200 set Pending else set Retry
+
+UI
+  The Square (Dashboard)
+    Color
+      White if no tests created
+      else Green if any tests successful
+      else Red if any tests failed
+      else Black (tests are queued)
+    OnClick
+      goes to Review Item detail page
+
+  Review Item detail page
+    Show list of existing tests with status
+    Allow creation of new test(s)
+      Launch on one or more clouds (select box)
+```
 
 
 ## Contributing

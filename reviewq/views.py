@@ -1,4 +1,3 @@
-import requests
 import logging
 
 from dateutil import parser
@@ -11,7 +10,8 @@ from datetime import (
 from pyramid.httpexceptions import (
     HTTPFound,
     HTTPNotFound,
-    )
+    HTTPUnauthorized,
+)
 
 from pyramid.view import view_config
 
@@ -30,12 +30,11 @@ from .helpers import (
     ReviewedSerializer,
     ReviewTestSerializer,
     get_lp,
-    request_build,
     create_user,
 )
 
 
-from tasks import parse_tests
+from tasks import update_lp_item
 
 
 log = logging.getLogger(__name__)
@@ -44,24 +43,28 @@ log = logging.getLogger(__name__)
 @view_config(route_name='home', accept='text/html',
              renderer='templates/dashboard.pt')
 def dashboard(request):
-    #reviews = DBSession.query(Review).group_by(Review.review_category_id).all()
-    reviews = DBSession.query(Review).filter(Review.state != 'REVIEWED',
-                                             Review.state != 'NEW',
-                                             Review.state != 'IN PROGRESS',
-                                             Review.state != 'CLOSED',
-                                             Review.state != 'MERGED',
-                                             Review.state != 'ABANDONDED').order_by(Review.updated).all()
-    incoming = DBSession.query(Review).filter_by(state='NEW').order_by(Review.updated).all()
+    reviews = DBSession.query(Review).filter(
+        Review.state != 'REVIEWED',
+        Review.state != 'NEW',
+        Review.state != 'IN PROGRESS',
+        Review.state != 'CLOSED',
+        Review.state != 'MERGED',
+        Review.state != 'ABANDONDED').order_by(
+        Review.updated).all()
+
+    incoming = DBSession.query(Review).filter_by(
+        state='NEW').order_by(Review.updated).all()
+
     return dict(reviews=reviews, incoming=incoming)
 
 
 @view_config(route_name='home', accept='application/json', renderer='json')
 def dashboard_json(req):
     d = dashboard(req)
-    out = {'reviews': [ReviewSerializer(r).data for r in d['reviews']],
-           'incoming': [ReviewSerializer(r).data for r in d['incoming']],
-          }
-    return out
+    return {
+        'reviews': [ReviewSerializer().dump(r).data for r in d['reviews']],
+        'incoming': [ReviewSerializer().dump(r).data for r in d['incoming']],
+    }
 
 
 @view_config(route_name='find_user', renderer='templates/user.pt')
@@ -76,15 +79,18 @@ def find_user(req):
 @view_config(route_name='search_user', renderer='json')
 def search_user(req):
     query = req.params['q']
-    matches = DBSession.query(User).filter(User.name.like('%%%s%%' % query)).all()
-    return UserSerializer(matches, many=True, exclude=('reviews', )).data
+    matches = DBSession.query(User).filter(
+        User.name.like('%%%s%%' % query)).all()
+    return UserSerializer(
+        many=True, exclude=('reviews',)
+    ).dump(matches).data
 
 
 @view_config(route_name='query_results', renderer='templates/search.pt')
 def saved_search(request):
-    q = request.matchdict['filter']
-
-    #return search(request, q)
+    # q = request.matchdict['filter']
+    # return search(request, q)
+    return {}
 
 
 @view_config(route_name='login', renderer='json')
@@ -105,16 +111,19 @@ def login(req):
         if not profile:
             log.debug('Never logged in before? Welcome.')
             # So, first time login. Try to match username?
-            profile = DBSession.query(Profile).filter_by(username=username).first()
+            profile = DBSession.query(Profile).filter_by(
+                username=username).first()
 
         if profile:
             user = profile.user
 
         if not profile:
             log.debug('Fuck off, you havent done jack shit')
-            # Okay, so we still don't have a profile. wtf guys. GET YOUR REVIEW ON. Create a user for now? Sure.
+            # Okay, so we still don't have a profile. wtf guys.
+            # GET YOUR REVIEW ON. Create a user for now? Sure.
             lp = get_lp()
-            person = lp.load('https://api.launchpad.net/1.0/~%s' % username)
+            person = lp.load('{}/~{}'.format(
+                req.registry.settings['launchpad.api.url'], username))
             user = create_user(person)
             profile = user.profile[0]
 
@@ -126,14 +135,15 @@ def login(req):
 
 
 @view_config(route_name='query', renderer='templates/search.pt')
-def serach(request):
-    filters = {'reviewer': [],
-               'owner': [],
-               'from': None,
-               'to': None,
-               'source': None,
-               'state': [],
-              }
+def search(request):
+    filters = {
+        'reviewer': [],
+        'owner': [],
+        'from': None,
+        'to': None,
+        'source': None,
+        'state': [],
+    }
     if not request.params:
         week_ago = datetime.now() - timedelta(days=7)
         filters['from'] = week_ago.strftime("%Y-%m-%d %H:%M")
@@ -186,7 +196,8 @@ def lock_review(request):
 
     if review.locked:
         if review.locker != user:
-            return dict(error='Review already locked by: %s' % review.locker.name)
+            return dict(
+                error='Review already locked by: %s' % review.locker.name)
 
         review.unlock()
         return dict(error=None)
@@ -195,41 +206,24 @@ def lock_review(request):
     return dict(error=None)
 
 
-@view_config(route_name='test_review', renderer='json')
+@view_config(route_name='test_review')
 def test_review(request):
-    if 'User' not in request.session:
-        return dict(error='Not logged in')
+    user = request.session.get('User')
+    if not (user and user.is_charmer):
+        return HTTPUnauthorized()
 
-    user = request.session['User']
-    if not user.is_charmer:
-        return dict(error='Only charmers can initiate reviews')
-
-    review_id = request.matchdict['review']
-    review = DBSession.query(Review).get(review_id)
-
+    review = Review.get(request.matchdict['review'])
     if not review:
-        return dict(error='Unable to find requested review %s' % review_id)
+        return HTTPNotFound()
 
-    rt = ReviewTest(status='PENDING', review=review, finished=None,
-                    requester=user)
-    DBSession.add(rt)
-    DBSession.flush()
+    substrate = request.params.get('substrate')
+    substrate = None if substrate == 'all' else [substrate]
 
-    if review.type == 'UPDATE':
-        br = dict(url=review.url, review=review_id, id=rt.id)
-    else:
-        lp = get_lp()
-        bug = lp.load(review.api_url).bug
-        br = dict(url=bug.linked_branches[0].branch.bzr_identity,
-                  review=review_id, id=rt.id)
+    review.create_tests(
+        request.registry.settings, substrates=substrate)
 
-    try:
-        request_build(br, token=request.registry.settings['cbt.token'])
-    except:
-        DBSession.delete(rt)
-        return dict(error='Unable to initiate build')
-
-    return dict(error=None)
+    return HTTPFound(location=request.route_url(
+        'show_review', review=review.id))
 
 
 @view_config(route_name='show_review', accept='text/html',
@@ -241,29 +235,40 @@ def review(req):
     if not review:
         return HTTPNotFound('No such review')
 
-    return dict(review=review)
+    settings = req.registry.settings
+    substrates = settings.get('testing.substrates', '')
+    substrates = [s.strip() for s in substrates.split(',')]
+    return dict(
+        review=review,
+        substrates=substrates,
+    )
 
 
 @view_config(route_name='show_review', accept='application/json',
              renderer='json')
 def review_json(req):
-    return ReviewSerializer(review(req)['review']).data
+    return ReviewSerializer().dump(review(req)['review']).data
 
 
 @view_config(route_name='id_user', accept="application/json", renderer='json')
 def id_json(request):
     data = DBSession.query(User).get(request.matchdict['id'])
+    return UserSerializer(exclude=('reviews', )).dump(data).data
 
-    return UserSerializer(data, exclude=('reviews', )).data
 
-
-@view_config(route_name='view_user', accept="application/json", renderer='json')
+@view_config(route_name='view_user', accept="application/json",
+             renderer='json')
 def user_json(request):
     data = user(request)
 
-    return dict(user=UserSerializer(data['user'], exclude=('reviews', )).data,
-                reviews=ReviewedSerializer(data['reviews'], many=True).data,
-                submitted=ReviewSerializer(data['submitted'], exclude=('owner', ), many=True).data)
+    return dict(
+        user=UserSerializer(
+            exclude=('reviews',)).dump(data['user']).data,
+        reviews=ReviewedSerializer(
+            many=True).dump(data['reviews']).data,
+        submitted=ReviewSerializer(
+            exclude=('owner', ), many=True).dump(data['submitted']).data,
+    )
 
 
 @view_config(route_name='view_user',
@@ -274,35 +279,47 @@ def user(request):
     user = DBSession.query(Profile).filter_by(username=username).first().user
     if not user:
         return HTTPNotFound('No such user')
-    submitted = (DBSession.query(Review)
-                          .filter_by(owner=user)
-                          .order_by(Review.updated)
-                ).all()
-    reviews = (DBSession.query(Review)
-                        .filter(Review.id.in_(DBSession.query(Review.id)
-                                                       .join(ReviewVote)
-                                                       .filter_by(owner=user)),
-                                Review.owner != user)
-                        .order_by(Review.updated)
-              ).all()
-    locked = (DBSession.query(Review)
-                       .filter_by(locker=user)
-                       .order_by(Review.locked)
-             ).all()
+    submitted = (
+        DBSession.query(Review)
+        .filter_by(owner=user)
+        .order_by(Review.updated)
+        .all()
+    )
+    reviews = (
+        DBSession.query(Review)
+        .filter(
+            Review.id.in_(
+                DBSession.query(Review.id)
+                .join(ReviewVote)
+                .filter_by(owner=user)),
+            Review.owner != user)
+        .order_by(Review.updated)
+        .all()
+    )
+    locked = (
+        DBSession.query(Review)
+        .filter_by(locker=user)
+        .order_by(Review.locked)
+        .all()
+    )
 
     return dict(user=user, reviews=reviews, submitted=submitted, locked=locked)
 
 
 @view_config(route_name='cbt_review_callback', renderer='json')
 def cbt_processing(request):
-    review_id = request.matchdict.get('review')
-    id = request.matchdict.get('id')
-    if review_id and id:
-        rt = DBSession.query(ReviewTest).get(id)
+    review_id = request.matchdict.get('review_id')
+    review_test_id = request.matchdict.get('review_test_id')
+    if review_id and review_test_id:
+        rt = ReviewTest.get(int(review_test_id))
 
     if not rt:
-        return HTTPNotFound('No review and test found')
+        return HTTPNotFound('ReviewTest not found')
 
-    parse_tests.delay(rt, request.params.get('result_url'))
+    rt.status = request.params.get('status')
+    rt.url = request.params.get('build_url')
+    if rt.status != 'RUNNING':
+        rt.finished = datetime.utcnow()
+        update_lp_item.delay(rt)
 
-    return ReviewTestSerializer(rt).data
+    return ReviewTestSerializer().dump(rt).data

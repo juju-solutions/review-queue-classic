@@ -1,9 +1,9 @@
 import datetime
 import pyramid
+import requests
 
 from sqlalchemy import (
     Column,
-    Index,
     Integer,
     Text,
     Boolean,
@@ -26,7 +26,20 @@ from sqlalchemy.orm import (
 from zope.sqlalchemy import ZopeTransactionExtension
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
-Base = declarative_base()
+
+
+class Base(object):
+    @classmethod
+    def get(cls, *args, **kw):
+        if args:
+            return DBSession.query(cls).get(*args)
+
+        return (
+            DBSession.query(cls)
+            .filter_by(**kw)
+            .first()
+        )
+Base = declarative_base(cls=Base)
 
 
 class UTCDateTime(TypeDecorator):
@@ -55,8 +68,10 @@ class Review(Base):
     type = Column(Enum('NEW', 'UPDATE', name='review_type'))
     url = Column(Text)
     api_url = Column(Text)
-    state = Column(Enum('PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
-                        'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP', name='review_state'))
+    test_url = Column(Text)
+    state = Column(Enum(
+        'PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'ABANDONDED',
+        'READY', 'NEW', 'IN PROGRESS', 'FOLLOW UP', name='review_state'))
 
     created = Column(UTCDateTime, default=datetime.datetime.utcnow)
     updated = Column(UTCDateTime, default=datetime.datetime.utcnow)
@@ -73,20 +88,113 @@ class Review(Base):
     locker = relationship('User', foreign_keys=[lock_id],
                           backref=backref('locks'))
 
-    @pyramid.decorator.reify
-    def test(self):
-        if self.tests:
-            t = self.tests[-1]
-            if t.status == 'FAIL':
-                t.color = 'red'
-            elif t.status == 'PASS':
-                t.color = 'green'
-            else:
-                t.color = ''
+    def get_test_url(self):
+        if self.test_url:
+            return self.test_url
 
-            return t
-        else:
+        if self.type == 'UPDATE':
+            self.test_url = self.url
+        elif self.type == 'NEW':
+            from helpers import get_lp
+            bug = get_lp().load(self.api_url).bug
+            self.test_url = bug.linked_branches[0].branch.bzr_identity
+
+        return self.test_url
+
+    def get_tests_for_retry(self):
+        return (
+            DBSession.query(ReviewTest)
+            .filter_by(review_id=self.id)
+            .filter_by(status='RETRY')
+        )
+
+    def get_tests_for_cancel(self):
+        return (
+            DBSession.query(ReviewTest)
+            .filter_by(review_id=self.id)
+            .filter(ReviewTest.status.in_([
+                'RETRY',
+                'PENDING',
+                'RUNNING']))
+        )
+
+    def get_tests_overdue(self, timeout):
+        tests = (
+            DBSession.query(ReviewTest)
+            .filter_by(review_id=self.id)
+            .filter(ReviewTest.status.in_([
+                'PENDING',
+                'RUNNING']))
+        )
+
+        now = datetime.datetime.utcnow()
+        return [
+            t for t in tests
+            if (now - t.updated).total_seconds() > timeout
+        ]
+
+    def create_tests(self, settings, substrates=None):
+        if not self.id:
+            DBSession.flush()
+            assert self.id, 'Need Review.id to create tests'
+
+        substrates = (
+            substrates or
+            settings['testing.default_substrates'].split(',')
+        )
+        review_tests = []
+        # so we can correlate by `created` time later
+        batch_time = datetime.datetime.utcnow()
+        for substrate in substrates:
+            review_tests.append(ReviewTest(
+                status='RETRY',
+                substrate=substrate.strip(),
+                created=batch_time,
+            ))
+        self.tests.extend(review_tests)
+        DBSession.flush()  # get ReviewTest ids
+
+        for review_test in review_tests:
+            review_test.send_ci_request(settings)
+
+    def refresh_tests(self, settings):
+        if self.state in ('ABANDONDED', 'CLOSED'):
+            return self.cancel_tests()
+
+        for t in self.get_tests_for_retry():
+            t.send_ci_request(settings)
+
+        timeout = int(settings.get(
+            'testing.timeout', 60 * 60 * 24))
+        for t in self.get_tests_overdue(timeout):
+            if t.status == 'RUNNING':
+                if t.try_finish():
+                    continue
+            t.send_ci_request(settings)
+
+    def cancel_tests(self):
+        for t in self.get_tests_for_cancel():
+            t.status = 'CANCELED'
+            t.finished = datetime.datetime.utcnow()
+
+    @pyramid.decorator.reify
+    def test_status(self):
+        if not self.tests:
             return None
+
+        def has_status(s):
+            return [
+                t for t in self.tests
+                if t.status == s
+            ]
+
+        if any(has_status('PASS')):
+            return 'PASS'
+
+        if any(has_status('FAIL')):
+            return 'FAIL'
+
+        return 'QUEUED'
 
     @pyramid.decorator.reify
     def positive_votes(self):
@@ -150,15 +258,77 @@ class ReviewTest(Base):
     id = Column(Integer, primary_key=True)
     review_id = Column(Integer, ForeignKey('review.id'))
     requester_id = Column(Integer, ForeignKey('user.id'))
-    status = Column(Text)  # PENDING, PASS, FAIL?
+    status = Column(Text)  # RETRY, PENDING, PASS, FAIL
+    substrate = Column(Text)
     url = Column(Text)
 
     created = Column(UTCDateTime, default=datetime.datetime.utcnow)
-    finished = Column(UTCDateTime, default=datetime.datetime.utcnow)
+    updated = Column(UTCDateTime, default=datetime.datetime.utcnow,
+                     onupdate=datetime.datetime.utcnow)
+    finished = Column(UTCDateTime)
 
-    review = relationship('Review', backref=backref('tests'),
-                          order_by="ReviewTest.id")
+    review = relationship(
+        'Review',
+        backref=backref('tests'),
+        order_by="ReviewTest.id"
+    )
     requester = relationship('User')
+
+    def send_ci_request(self, settings):
+        req_url = settings['testing.jenkins_url']
+        callback_url = (
+            '{}/review/{}/ctb_callback/{}'.format(
+                settings['app.url'],
+                self.review.id,
+                self.id,
+            )
+        )
+
+        req_params = {
+            'url': self.review.get_test_url(),
+            'token': settings['testing.jenkins_token'],
+            'cause': 'Review Queue Ingestion',
+            'callback_url': callback_url,
+            'job_id': self.id,
+            'envs': self.substrate,
+        }
+
+        r = requests.get(req_url, params=req_params)
+
+        if r.status_code == requests.codes.ok:
+            self.status = 'PENDING'
+            self.updated = datetime.datetime.utcnow()
+
+    def try_finish(self):
+        """Attempt to find a CI result for this ReviewTest
+        and update the ReviewTest accordingly.
+
+        Returns True if successful, else False.
+
+        """
+        if self.status != 'RUNNING' or not self.url:
+            return False
+
+        result_url = '{}artifact/results.json'.format(self.url)
+        try:
+            result_data = requests.get(result_url).json()
+        except:
+            return False
+
+        from .tasks import update_lp_item
+
+        passed = all(
+            test.get('returncode', 0) == 0
+            for test in result_data.get('tests', {})
+        )
+        self.status = 'PASS' if passed else 'FAIL'
+        self.finished = datetime.datetime.strptime(
+            result_data['finished'],
+            '%Y-%m-%dT%H:%M:%SZ'
+        )
+        update_lp_item.delay(self)
+
+        return True
 
 
 class ReviewVote(Base):
@@ -168,7 +338,8 @@ class ReviewVote(Base):
     user_id = Column(Integer, ForeignKey('user.id'))
     review_id = Column(Integer, ForeignKey('review.id'))
 
-    vote = Column(Enum('POSITIVE', 'NEGATIVE', 'COMMENT', name='reviewvote_vote'))
+    vote = Column(Enum(
+        'POSITIVE', 'NEGATIVE', 'COMMENT', name='reviewvote_vote'))
     created = Column(UTCDateTime)
 
     owner = relationship('User', backref=backref('votes'))

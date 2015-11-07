@@ -1,10 +1,9 @@
 import re
 import time
-import requests
 import transaction
 
 from launchpadlib.launchpad import Launchpad
-from marshmallow import Serializer, fields
+from marshmallow import Schema as Serializer, fields
 
 from pyramid.events import subscriber
 
@@ -22,8 +21,6 @@ from .models import (
     ReviewVote,
     Series,
 )
-
-CBT_URL = 'http://juju-ci.vapour.ws:8080/job/charm-bundle-test/buildWithParameters'
 
 
 def create_project(name):
@@ -49,43 +46,37 @@ def bug_state(bug_task):
 def map_lp_state(state):
     # 'NEW', 'PENDING', 'REVIEWED', 'MERGED', 'CLOSED', 'READY', 'ABANDONDED',
     # 'IN PROGRESS', 'FOLLOW UP'
-    states = {'new': 'PENDING',
-              'incomplete': 'REVIEWED',
-              'incomplete (without response)': 'REVIEWED',
-              'incomplete (with response)': 'FOLLOW UP',
-              'opinion': 'CLOSED',
-              'invalid': 'CLOSED',
-              "won't fix": 'ABANDONDED',
-              "expired": 'ABANDONDED',
-              'confirmed': 'PENDING',
-              'triaged': 'PENDING',
-              'in progress': 'IN PROGRESS',
-              'fix committed': 'READY',
-              'fix released': 'CLOSED',
-              'needs review': 'PENDING',
-              'work in progress': 'IN PROGRESS',
-              'approved': 'READY',
-              'rejected': 'ABANDONDED',
-              'merged': 'MERGED',
-              'superseded': 'ABANDONDED',
-              'queued': 'PENDING',
-              'code failed to merge': 'FOLLOW UP',
-             }
+    states = {
+        'new': 'PENDING',
+        'incomplete': 'REVIEWED',
+        'incomplete (without response)': 'REVIEWED',
+        'incomplete (with response)': 'FOLLOW UP',
+        'opinion': 'CLOSED',
+        'invalid': 'CLOSED',
+        "won't fix": 'ABANDONDED',
+        "expired": 'ABANDONDED',
+        'confirmed': 'PENDING',
+        'triaged': 'PENDING',
+        'in progress': 'IN PROGRESS',
+        'fix committed': 'READY',
+        'fix released': 'CLOSED',
+        'needs review': 'PENDING',
+        'work in progress': 'IN PROGRESS',
+        'approved': 'READY',
+        'rejected': 'ABANDONDED',
+        'merged': 'MERGED',
+        'superseded': 'ABANDONDED',
+        'queued': 'PENDING',
+        'code failed to merge': 'FOLLOW UP',
+    }
 
     return states[state.lower()]
 
 
 def create_vote(vote):
-    rv = (DBSession.query(ReviewVote)
-                   .filter_by(comment_id=vote['comment_id'])
-                   .first()
-         )
-
+    rv = ReviewVote.get(comment_id=vote['comment_id'])
     if not rv:
         rv = ReviewVote()
-        print("Creating %s" % vote['comment_id'])
-    else:
-        print("Updating %s" % vote['comment_id'])
 
     rv.vote = vote['vote']
     rv.owner = vote['owner']
@@ -160,7 +151,9 @@ def determine_sentiment(text):
 @subscriber(NewRequest)
 def setup_user(event):
     if 'user' in event.request.session:
-        event.request.session['User'] = DBSession.query(User).get(event.request.session['user'])
+        event.request.session['User'] = (
+            User.get(event.request.session['user'])
+        )
 
 
 @subscriber(BeforeRender)
@@ -184,28 +177,6 @@ def get_lp(login=False):
 def login(login=False):
     lp = get_lp(True)
     return lp.me
-
-
-def request_build(build, cbt=None, token=None):
-    if not cbt:
-        cbt = CBT_URL
-
-    if not token:
-        raise Exception('No token provided')
-
-    # Build from request.route_url
-    cb = 'http://review.juju.solutions/review/%s/ctb_callback/%s' %(build['review'],
-                                                                    build['id'])
-    response = requests.post(cbt, data={
-        'url': build['url'],
-        'token': token,
-        'callback_url': cb,
-        'code_review': 'true',
-        'cause': 'Requested by review-queue ingestion.'
-    })
-    response.raise_for_status()
-
-    return response
 
 
 def wait_a_second(method):
@@ -240,13 +211,15 @@ class UserSerializer(Serializer):
     charmer = fields.Method('charmer_map')
 
     def reviews_map(self, u):
-        return ReviewSerializer(u.reviews, many=True, exclude=('owner')).data
+        return ReviewSerializer(
+            many=True, exclude=('owner')
+        ).dump(u.reviews).data
 
     def charmer_map(self, f):
         return f.is_charmer
 
     def profiles_map(self, f):
-        return ProfileSerializer(f.profiles, many=True).data
+        return ProfileSerializer(many=True).dump(f.profiles).data
 
     class Meta:
         fields = ('id', 'name', 'charmer', 'profiles', 'reviews')
@@ -256,17 +229,23 @@ class ReviewSerializer(Serializer):
     owner = fields.Method('owner_map')
 
     def owner_map(self, r):
-        return UserSerializer(r.owner, exclude=('reviews', 'profiles', )).data
+        return UserSerializer(
+            exclude=('reviews', 'profiles')
+        ).dump(r.owner).data
 
     class Meta:
-        fields = ('id', 'title', 'type', 'url', 'state', 'owner', 'created', 'updated')
+        fields = (
+            'id', 'title', 'type', 'url', 'state',
+            'owner', 'created', 'updated',
+        )
 
 
 class ReviewTestSerializer(Serializer):
     review = fields.Method('review_map')
 
     def review_map(self, r):
-        return ReviewSerializer(r.review, exclude=('tests')).data
+        return ReviewSerializer(
+            exclude=('tests')).dump(r.review).data
 
     class Meta:
         fields = ('id', 'status', 'created', 'finished', 'url', 'review')
@@ -295,7 +274,9 @@ class ReviewedSerializer(Serializer):
         return r.review.url
 
     def owner_map(self, r):
-        return UserSerializer(r.review.owner, exclude=('reviews', 'profiles', )).data
+        return UserSerializer(
+            exclude=('reviews', 'profiles')
+        ).dump(r.review.owner).data
 
     def state_map(self, r):
         return r.review.state
@@ -307,4 +288,7 @@ class ReviewedSerializer(Serializer):
         return r.review.updated.strftime('%Y-%m-%dT%H:%M:%S')
 
     class Meta:
-        fields = ('id', 'title', 'type', 'url', 'owner', 'state', 'created', 'updated')
+        fields = (
+            'id', 'title', 'type', 'url', 'owner',
+            'state', 'created', 'updated',
+        )

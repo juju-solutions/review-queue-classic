@@ -17,6 +17,45 @@
           It has been locked for review by ${review.locker.name} since ${review.locked}
         </span>
       </p>
+      <h1>Tests</h1>
+      <table class="ui table segment sortable">
+        <thead>
+          <tr>
+            <th>Substrate</th>
+            <th>Status</th>
+            <th>Jenkins Log</th>
+            <th>Last Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr tal:condition="not review.tests">
+            <td colspan="4">No tests have been run.</td>
+          </tr>
+          <tr tal:repeat="test review.tests">
+            <td tal:content="test.substrate">
+            <td tal:content="test.status">
+            <td>
+              <a tal:condition="test.url"
+                 tal:content="test.url + 'console'"
+                 tal:attributes="href test.url + 'console'">
+            </td>
+            <td tal:content="test.updated">
+          </tr>
+        </tbody>
+      </table>
+      <div tal:condition="request.session.get('User') and request.session.get('User').is_charmer">
+        <h2>New Test</h2>
+        <form method="post"
+              action="${request.route_url('test_review', review=review.id)}">
+          <select name="substrate">
+            <option tal:repeat="substrate substrates"
+                    tal:attributes="value substrate"
+                    tal:content="substrate">
+            <option value="all">All</option>
+          </select>
+          <input type="submit" value="Start Test">
+        </form>
+      </div>
     </div>
   </p>
 </metal:main>

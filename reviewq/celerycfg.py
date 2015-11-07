@@ -18,7 +18,8 @@ celery = Celery('reviewq.celery',
 
 # Optional configuration, see the application user guide.
 celery.conf.update(
-    CELERY_BACKEND_TRANSPORT_OPTIONS=config.get('celery', 'backend_transport_options'),
+    CELERY_BACKEND_TRANSPORT_OPTIONS=config.get(
+        'celery', 'backend_transport_options'),
     CELERY_ACCEPT_CONTENT=['pickle'],
     CELERY_TIMEZONE='UTC',
     CELERYBEAT_SCHEDULE={
@@ -29,11 +30,6 @@ celery.conf.update(
         'ingest_lp': {
             'task': 'reviewq.tasks.import_from_lp',
             'schedule': timedelta(seconds=1300),
-        },
-    },
-    CELERY_ROUTES={
-        'reviewq.tasks.parse_tests': {
-            'queue': 'priority'
         },
     },
 )

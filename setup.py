@@ -19,7 +19,7 @@ requires = [
     'waitress',
     'launchpadlib',
     'alembic',
-    'marshmallow',
+    'marshmallow>=2.1.0',
     'python-dateutil',
     'velruse',
     'requests',
