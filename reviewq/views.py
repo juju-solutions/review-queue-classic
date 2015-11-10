@@ -217,7 +217,11 @@ def test_review(request):
         return HTTPNotFound()
 
     substrate = request.params.get('substrate')
-    substrate = None if substrate == 'all' else [substrate]
+    substrate = (
+        request.registry.settings['testing.substrates'].split(',')
+        if substrate == 'all'
+        else [substrate]
+    )
 
     review.create_tests(
         request.registry.settings, substrates=substrate)
