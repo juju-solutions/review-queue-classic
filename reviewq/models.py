@@ -97,7 +97,11 @@ class Review(Base):
         elif self.type == 'NEW':
             from helpers import get_lp
             bug = get_lp().load(self.api_url).bug
-            self.test_url = bug.linked_branches[0].branch.bzr_identity
+            self.test_url = (
+                bug.linked_branches[0].branch.bzr_identity
+                if bug.linked_branches
+                else None
+            )
 
         return self.test_url
 
@@ -284,6 +288,10 @@ class ReviewTest(Base):
     requester = relationship('User')
 
     def send_ci_request(self, settings):
+        test_url = self.review.get_test_url()
+        if not test_url:
+            return
+
         req_url = settings['testing.jenkins_url']
         callback_url = (
             '{}/review/{}/ctb_callback/{}'.format(
@@ -294,7 +302,7 @@ class ReviewTest(Base):
         )
 
         req_params = {
-            'url': self.review.get_test_url(),
+            'url': test_url,
             'token': settings['testing.jenkins_token'],
             'cause': 'Review Queue Ingestion',
             'callback_url': callback_url,

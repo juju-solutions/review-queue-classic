@@ -174,13 +174,18 @@ class LaunchPad(SourcePlugin):
     @wait_a_second
     def create_from_bug(self, task):
         bug = task.bug
+        test_url = (
+            bug.linked_branches[0].branch.bzr_identity
+            if bug.linked_branches
+            else None
+        )
         with transaction.manager:
             r = Review.get(api_url=task.self_link)
             if not r:
                 r = Review(
                     type='NEW',
                     api_url=task.self_link,
-                    test_url=bug.linked_branches[0].branch.bzr_identity,
+                    test_url=test_url,
                     created=task.date_created.replace(tzinfo=None)
                 )
                 r.source = Source.get(slug='lp')
@@ -193,7 +198,7 @@ class LaunchPad(SourcePlugin):
             r.title = bug.title
             r.owner = create_user(task.owner)
             r.url = task.web_link
-            r.test_url = bug.linked_branches[0].branch.bzr_identity
+            r.test_url = test_url
             r.syncd = datetime.datetime.utcnow()
             state = bug_state(task)
             updated = (
