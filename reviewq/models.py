@@ -101,6 +101,13 @@ class Review(Base):
 
         return self.test_url
 
+    def get_tests_without_substrate(self):
+        return (
+            DBSession.query(ReviewTest)
+            .filter_by(review_id=self.id)
+            .filter_by(substrate=None)
+        )
+
     def get_tests_for_retry(self):
         return (
             DBSession.query(ReviewTest)
@@ -161,6 +168,9 @@ class Review(Base):
         if self.state in ('ABANDONDED', 'CLOSED'):
             return self.cancel_tests()
 
+        for t in self.get_tests_without_substrate():
+            t.cancel()
+
         for t in self.get_tests_for_retry():
             t.send_ci_request(settings)
 
@@ -174,8 +184,7 @@ class Review(Base):
 
     def cancel_tests(self):
         for t in self.get_tests_for_cancel():
-            t.status = 'CANCELED'
-            t.finished = datetime.datetime.utcnow()
+            t.cancel()
 
     @pyramid.decorator.reify
     def test_status(self):
@@ -329,6 +338,10 @@ class ReviewTest(Base):
         update_lp_item.delay(self)
 
         return True
+
+    def cancel(self):
+        self.status = 'CANCELED'
+        self.finished = datetime.datetime.utcnow()
 
 
 class ReviewVote(Base):
