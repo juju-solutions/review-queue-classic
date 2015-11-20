@@ -87,6 +87,11 @@ class Review(Base):
                          backref=backref('reviews'))
     locker = relationship('User', foreign_keys=[lock_id],
                           backref=backref('locks'))
+    tests = relationship(
+        'ReviewTest',
+        backref=backref('review'),
+        order_by="desc(ReviewTest.updated)"
+    )
 
     def get_test_url(self):
         if self.test_url:
@@ -97,9 +102,20 @@ class Review(Base):
         elif self.type == 'NEW':
             from helpers import get_lp
             bug = get_lp().load(self.api_url).bug
-            self.test_url = bug.linked_branches[0].branch.bzr_identity
+            self.test_url = (
+                bug.linked_branches[0].branch.bzr_identity
+                if bug.linked_branches
+                else None
+            )
 
         return self.test_url
+
+    def get_tests_without_substrate(self):
+        return (
+            DBSession.query(ReviewTest)
+            .filter_by(review_id=self.id)
+            .filter_by(substrate=None)
+        )
 
     def get_tests_for_retry(self):
         return (
@@ -161,6 +177,9 @@ class Review(Base):
         if self.state in ('ABANDONDED', 'CLOSED'):
             return self.cancel_tests()
 
+        for t in self.get_tests_without_substrate():
+            t.cancel()
+
         for t in self.get_tests_for_retry():
             t.send_ci_request(settings)
 
@@ -174,8 +193,7 @@ class Review(Base):
 
     def cancel_tests(self):
         for t in self.get_tests_for_cancel():
-            t.status = 'CANCELED'
-            t.finished = datetime.datetime.utcnow()
+            t.cancel()
 
     @pyramid.decorator.reify
     def test_status(self):
@@ -267,14 +285,13 @@ class ReviewTest(Base):
                      onupdate=datetime.datetime.utcnow)
     finished = Column(UTCDateTime)
 
-    review = relationship(
-        'Review',
-        backref=backref('tests'),
-        order_by="ReviewTest.id"
-    )
     requester = relationship('User')
 
     def send_ci_request(self, settings):
+        test_url = self.review.get_test_url()
+        if not test_url:
+            return
+
         req_url = settings['testing.jenkins_url']
         callback_url = (
             '{}/review/{}/ctb_callback/{}'.format(
@@ -285,7 +302,7 @@ class ReviewTest(Base):
         )
 
         req_params = {
-            'url': self.review.get_test_url(),
+            'url': test_url,
             'token': settings['testing.jenkins_token'],
             'cause': 'Review Queue Ingestion',
             'callback_url': callback_url,
@@ -329,6 +346,10 @@ class ReviewTest(Base):
         update_lp_item.delay(self)
 
         return True
+
+    def cancel(self):
+        self.status = 'CANCELED'
+        self.finished = datetime.datetime.utcnow()
 
 
 class ReviewVote(Base):

@@ -90,7 +90,8 @@ def update_lp_item(self, rt):
     if content and asbool(celery.settings.get('testing.comments')):
         subject = (
             '%s Test Results: %s' % (
-                rt.substrate.upper(), rt.review.title))
+                (rt.substrate or '').upper(),
+                rt.review.title))
 
         if hasattr(item, 'createComment'):
             # It's a merge request
