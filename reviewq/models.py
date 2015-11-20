@@ -87,6 +87,11 @@ class Review(Base):
                          backref=backref('reviews'))
     locker = relationship('User', foreign_keys=[lock_id],
                           backref=backref('locks'))
+    tests = relationship(
+        'ReviewTest',
+        backref=backref('review'),
+        order_by="desc(ReviewTest.updated)"
+    )
 
     def get_test_url(self):
         if self.test_url:
@@ -280,11 +285,6 @@ class ReviewTest(Base):
                      onupdate=datetime.datetime.utcnow)
     finished = Column(UTCDateTime)
 
-    review = relationship(
-        'Review',
-        backref=backref('tests'),
-        order_by="ReviewTest.id"
-    )
     requester = relationship('User')
 
     def send_ci_request(self, settings):
