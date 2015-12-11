@@ -5,7 +5,7 @@
       <div>
         <p>A list of all new incoming charms! Shortly a reviewer will be by to
         perform an initial review of your charm. To make this process smoother make
-        sure you've read all <a href="https://juju.ubuntu.com/docs/authors-charm-policy.html">Charm Store policies</a> and have <code>charm proof</code>
+        sure you've read all <a href="https://jujucharms.com/docs/stable/authors-charm-policy">Charm Store policies</a> and have <code>charm proof</code>
         passing without an ERROR or WARNING messages.</p>
       </div>
       <table class="ui table segment sortable">
